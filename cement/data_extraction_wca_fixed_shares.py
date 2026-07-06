@@ -1,4 +1,6 @@
 import re
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
@@ -6,15 +8,21 @@ import pandas as pd
 # -------------------------------------------------------------------
 # File paths
 # -------------------------------------------------------------------
-pop_path = "undesa_pop.xlsx"
-gdp_path = "gdp_projection_country_SSP2.xlsx"
+BASE_DIR = Path(__file__).resolve().parent
+INPUTS_DIR = BASE_DIR / "inputs"
+MAPS_DIR = BASE_DIR / "maps"
+OUTPUTS_DIR = BASE_DIR / "outputs"
+
+pop_path = INPUTS_DIR / "undesa_pop.xlsx"
+gdp_path = INPUTS_DIR / "gdp_projection_country_SSP2.xlsx"
 
 cement_url = (
     "https://zenodo.org/records/20397304/files/"
     "1.%20annual_cement_production.csv?download=1"
 )
 
-output_path = "cement_demand_with_population_elasticity_from_2014.xlsx"
+output_path = OUTPUTS_DIR / "cement_demand_with_population_wca_fixed_shares.csv"
+wca_mapping_output_path = MAPS_DIR / "wca_country_region_mapping_fixed_shares.csv"
 
 
 # -------------------------------------------------------------------
@@ -22,10 +30,8 @@ output_path = "cement_demand_with_population_elasticity_from_2014.xlsx"
 # -------------------------------------------------------------------
 START_YEAR = 1951
 END_YEAR = 2100
-BASE_YEAR = 2014
+BASE_YEAR = 2024
 PROJECTION_START_YEAR = BASE_YEAR + 1
-GDP_BACKCAST_END_YEAR = 2019
-GDP_BACKCAST_CAGR_END_YEAR = 2024
 
 KEEP_ONLY_COUNTRIES_WITH_POPULATION = True
 
@@ -35,17 +41,108 @@ DEMAND_UNIT = "kt cement"
 POPULATION_METRIC = "Population"
 POPULATION_UNIT = ""
 
-ELASTICITY_POINTS = [
-    (0.0, 1.264),
-    (0.1, 1.1),
-    (0.2, 1.109),
-    (0.3, 0.6),
-    (0.4, 0.336),
-    (0.5, 0.18),
-    (0.6, -0.027),
-    (0.7, -0.041),
-    (0.8, -0.252),
-]
+# Regional cement consumption from the WCA table extracted to cement.docx.
+# Units are Mtpa. The table header has a typo ("20235"), interpreted as 2035.
+WCA_REGION_CONSUMPTION_MTPA = {
+    "China": {2020: 2411, 2024: 1825, 2035: 1183, 2050: 928},
+    "North America": {2020: 115, 2024: 120, 2035: 131, 2050: 138},
+    "W Europe": {2020: 131, 2024: 126, 2035: 129, 2050: 125},
+    "E Europe & Turkey": {2020: 120, 2024: 127, 2035: 129, 2050: 125},
+    "Oceania": {2020: 12, 2024: 12, 2035: 13, 2050: 14},
+    "NE Asia": {2020: 97, 2024: 97, 2035: 89, 2050: 85},
+    "SE Asia": {2020: 236, 2024: 240, 2035: 275, 2050: 297},
+    "North Africa": {2020: 93, 2024: 97, 2035: 111, 2050: 131},
+    "Latin America": {2020: 164, 2024: 176, 2035: 202, 2050: 215},
+    "CIS": {2020: 97, 2024: 116, 2035: 127, 2050: 136},
+    "Middle East": {2020: 196, 2024: 208, 2035: 235, 2050: 254},
+    "South Asia": {2020: 392, 2024: 537, 2035: 813, 2050: 908},
+    "Sub Saharan Africa": {2020: 130, 2024: 153, 2035: 207, 2050: 308},
+}
+
+
+WCA_REGION_BY_OMNIA = {
+    "AFE": "Sub Saharan Africa",
+    "AFN": "North Africa",
+    "AFW": "Sub Saharan Africa",
+    "AFZ": "Sub Saharan Africa",
+    "ANZ": "Oceania",
+    "ASC": "CIS",
+    "ASE": "SE Asia",
+    "ASO": "South Asia",
+    "BRA": "Latin America",
+    "CAN": "North America",
+    "CHL": "Latin America",
+    "CHN": "China",
+    "ENE": "E Europe & Turkey",
+    "ENW": "W Europe",
+    "EUE": "E Europe & Turkey",
+    "EUM": "W Europe",
+    "EUW": "W Europe",
+    "IDN": "SE Asia",
+    "IND": "South Asia",
+    "JPN": "NE Asia",
+    "LAM": "Latin America",
+    "MDA": "Middle East",
+    "MEA": "Middle East",
+    "MEX": "Latin America",
+    "NIG": "Sub Saharan Africa",
+    "RUS": "CIS",
+    "SKT": "NE Asia",
+    "USA": "North America",
+}
+
+
+WCA_REGION_BY_ISO3_OVERRIDE = {
+    # WCA-specific split from the broader OMNIA Middle East group.
+    "TUR": "E Europe & Turkey",
+
+    # Pacific islands assigned to Oceania rather than the broader OMNIA SE Asia group.
+    "COK": "Oceania",
+    "FJI": "Oceania",
+    "FSM": "Oceania",
+    "KIR": "Oceania",
+    "MHL": "Oceania",
+    "NCL": "Oceania",
+    "NRU": "Oceania",
+    "NIU": "Oceania",
+    "PLW": "Oceania",
+    "PNG": "Oceania",
+    "PYF": "Oceania",
+    "SLB": "Oceania",
+    "TON": "Oceania",
+    "TUV": "Oceania",
+    "VUT": "Oceania",
+    "WLF": "Oceania",
+    "WSM": "Oceania",
+
+    # Countries and territories absent from the GDP/OMNIA file.
+    "AFG": "South Asia",
+    "AIA": "Latin America",
+    "AND": "W Europe",
+    "BES": "Latin America",
+    "BMU": "North America",
+    "CYM": "Latin America",
+    "CUW": "Latin America",
+    "DMA": "Latin America",
+    "FLK": "Latin America",
+    "FRO": "W Europe",
+    "GIB": "W Europe",
+    "GLP": "Latin America",
+    "GRL": "North America",
+    "GUF": "Latin America",
+    "KNA": "Latin America",
+    "LIE": "W Europe",
+    "MSR": "Latin America",
+    "MTQ": "Latin America",
+    "PSE": "Middle East",
+    "REU": "Sub Saharan Africa",
+    "SHN": "Sub Saharan Africa",
+    "SPM": "North America",
+    "SXM": "Latin America",
+    "SYR": "Middle East",
+    "TCA": "Latin America",
+    "VGB": "Latin America",
+}
 
 
 # -------------------------------------------------------------------
@@ -119,20 +216,6 @@ def remove_global_rows(df):
     return df[~mask].copy()
 
 
-def cement_income_elasticity(cement_output_per_capita):
-    """
-    Return cement income elasticity from Dirk's cement-output-per-capita table.
-    """
-    points = np.array(ELASTICITY_POINTS, dtype=float)
-    return np.interp(
-        cement_output_per_capita,
-        points[:, 0],
-        points[:, 1],
-        left=points[0, 1],
-        right=points[-1, 1],
-    )
-
-
 def read_gdp_projection(path):
     """
     Read annual GDP projections and normalise year-like column names.
@@ -153,200 +236,164 @@ def read_gdp_projection(path):
     return gdp
 
 
-def make_regional_base_intensities(cement_rows, population_rows, gdp, base_year):
+def wca_region_total_kt(region, year):
     """
-    Calculate population-weighted cement intensities by OMNIA region.
+    Return WCA regional cement consumption target in kt.
+
+    Values are linearly interpolated between WCA table years. After the final
+    WCA table year, the final observed WCA table trend is extrapolated as a
+    CAGR, so the projection remains based only on the WCA table.
     """
-    gdp_regions = gdp[["ISO3", "OMNIA"]].dropna(subset=["ISO3", "OMNIA"]).copy()
-    gdp_regions["ISO3"] = gdp_regions["ISO3"].astype(str).str.strip()
+    points = WCA_REGION_CONSUMPTION_MTPA[region]
+    years = sorted(points)
 
-    cement_base = cement_rows[["ISO3", base_year]].copy()
-    population_base = population_rows[["ISO3", base_year]].copy()
+    if year <= years[0]:
+        value_mt = points[years[0]]
+    elif year > years[-1]:
+        previous_year = years[-2]
+        final_year = years[-1]
+        previous_value = points[previous_year]
+        final_value = points[final_year]
+        trend_years = final_year - previous_year
+        annual_factor = (final_value / previous_value) ** (1 / trend_years)
+        value_mt = final_value * annual_factor ** (year - final_year)
+    else:
+        value_mt = np.interp(
+            year,
+            years,
+            [points[point_year] for point_year in years],
+        )
 
-    base = (
-        cement_base
-        .merge(population_base, on="ISO3", suffixes=("_cement", "_population"))
-        .merge(gdp_regions, on="ISO3", how="left")
+    return value_mt * 1000
+
+
+def build_wca_region_map(country_ref, gdp):
+    """
+    Map countries to WCA regions using ISO overrides and OMNIA groups.
+    """
+    omnia_by_iso3 = (
+        gdp[["ISO3", "OMNIA"]]
+        .dropna(subset=["ISO3", "OMNIA"])
+        .assign(ISO3=lambda df: df["ISO3"].astype(str).str.strip())
+        .set_index("ISO3")["OMNIA"]
+        .to_dict()
     )
 
-    cement_col = f"{base_year}_cement"
-    population_col = f"{base_year}_population"
+    mapping = {}
+    unmapped = []
 
-    base = base[
-        base[cement_col].notna() &
-        base[population_col].notna() &
-        (base[cement_col] > 0) &
-        (base[population_col] > 0) &
-        base["OMNIA"].notna()
-    ].copy()
+    for iso3 in country_ref["ISO3"]:
+        if iso3 in WCA_REGION_BY_ISO3_OVERRIDE:
+            mapping[iso3] = WCA_REGION_BY_ISO3_OVERRIDE[iso3]
+            continue
 
-    regional = (
-        base
-        .groupby("OMNIA")[[cement_col, population_col]]
-        .sum()
-    )
-    regional["cement_per_capita"] = (
-        regional[cement_col] / regional[population_col]
-    )
+        omnia = omnia_by_iso3.get(iso3)
+        region = WCA_REGION_BY_OMNIA.get(omnia)
+        if region:
+            mapping[iso3] = region
+        else:
+            unmapped.append(iso3)
 
-    global_cement_per_capita = (
-        base[cement_col].sum() / base[population_col].sum()
-        if not base.empty
-        else np.nan
-    )
-
-    return regional["cement_per_capita"].to_dict(), global_cement_per_capita
+    return mapping, unmapped
 
 
-def backcast_gdp_to_base_year(gdp, population_rows, base_year):
+def project_cement_demand_wca_fixed_shares(cement_rows, population_rows, country_ref, gdp, start_year, end_year):
     """
-    Backcast GDP to the base year using country GDP-per-capita CAGR.
+    Project country cement demand by preserving fixed country shares inside
+    each WCA region.
 
-    The available GDP file starts in 2019. For a 2014 cement-intensity anchor,
-    this estimates 2014-2018 GDP per capita from the 2019-2024 GDP-per-capita
-    CAGR, then converts back to total GDP using UN DESA population.
-    """
-    gdp = gdp.copy()
-    gdp_by_iso3 = gdp.set_index("ISO3")
-    population_by_iso3 = population_rows.set_index("ISO3")
-    backcast_issues = []
-
-    for year in range(base_year, GDP_BACKCAST_END_YEAR):
-        if year not in gdp.columns:
-            gdp[year] = np.nan
-
-    for idx, row in gdp.iterrows():
-        iso3 = row["ISO3"]
-        if iso3 not in population_by_iso3.index:
-            backcast_issues.append((iso3, "missing population row"))
-            continue
-
-        required_columns = [
-            GDP_BACKCAST_END_YEAR,
-            GDP_BACKCAST_CAGR_END_YEAR,
-        ]
-        if any(year not in gdp_by_iso3.columns for year in required_columns):
-            backcast_issues.append((iso3, "missing GDP CAGR endpoint"))
-            continue
-
-        start_gdp = row[GDP_BACKCAST_END_YEAR]
-        end_gdp = row[GDP_BACKCAST_CAGR_END_YEAR]
-        start_population = population_by_iso3.at[iso3, GDP_BACKCAST_END_YEAR]
-        end_population = population_by_iso3.at[iso3, GDP_BACKCAST_CAGR_END_YEAR]
-
-        required_values = [start_gdp, end_gdp, start_population, end_population]
-        if any(pd.isna(value) or value <= 0 for value in required_values):
-            backcast_issues.append((iso3, "missing/zero GDP CAGR input"))
-            continue
-
-        start_gdp_per_capita = start_gdp / start_population
-        end_gdp_per_capita = end_gdp / end_population
-        cagr_years = GDP_BACKCAST_CAGR_END_YEAR - GDP_BACKCAST_END_YEAR
-        growth_factor = (end_gdp_per_capita / start_gdp_per_capita) ** (1 / cagr_years)
-
-        if pd.isna(growth_factor) or growth_factor <= 0:
-            backcast_issues.append((iso3, "invalid GDP per capita CAGR"))
-            continue
-
-        next_gdp_per_capita = start_gdp_per_capita
-        for year in reversed(range(base_year, GDP_BACKCAST_END_YEAR)):
-            current_population = population_by_iso3.at[iso3, year]
-            if pd.isna(current_population) or current_population <= 0:
-                backcast_issues.append((iso3, f"missing/zero population in {year}"))
-                break
-
-            current_gdp_per_capita = next_gdp_per_capita / growth_factor
-            gdp.at[idx, year] = current_gdp_per_capita * current_population
-            next_gdp_per_capita = current_gdp_per_capita
-
-    gdp.columns = [normalise_year_column_name(c) for c in gdp.columns]
-
-    return gdp, backcast_issues
-
-
-def project_cement_demand_from_base(cement_rows, population_rows, gdp, base_year, end_year):
-    """
-    Project annual cement demand from a fixed base-year cement intensity.
+    The projection uses only WCA regional trends. Country allocation shares are
+    based on base-year cement demand where available. Missing country base
+    demand is imputed from the region's base-year average cement intensity.
     """
     projected = cement_rows.copy()
-
-    gdp_by_iso3 = gdp.set_index("ISO3")
     population_by_iso3 = population_rows.set_index("ISO3")
+    wca_region_by_iso3, unmapped = build_wca_region_map(country_ref, gdp)
+    projected["WCARegion"] = projected["ISO3"].map(wca_region_by_iso3)
 
-    projection_issues = []
+    projection_issues = [(iso3, "missing WCA region mapping") for iso3 in unmapped]
     projection_imputations = []
-    regional_base_intensities, global_base_intensity = make_regional_base_intensities(
-        cement_rows=cement_rows,
-        population_rows=population_rows,
-        gdp=gdp,
-        base_year=base_year,
-    )
+
+    if projected["WCARegion"].isna().any():
+        for iso3 in projected.loc[projected["WCARegion"].isna(), "ISO3"]:
+            projection_issues.append((iso3, "missing WCA region mapping"))
+
+    base_weights = {}
+
+    for region, region_rows in projected.dropna(subset=["WCARegion"]).groupby("WCARegion"):
+        region_rows = region_rows.copy()
+        positive_mask = (
+            region_rows[BASE_YEAR].notna() &
+            (region_rows[BASE_YEAR] > 0)
+        )
+
+        positive_iso3 = region_rows.loc[positive_mask, "ISO3"]
+        positive_demand = region_rows.loc[positive_mask, BASE_YEAR].sum()
+        positive_population = (
+            population_by_iso3
+            .loc[positive_iso3, BASE_YEAR]
+            .dropna()
+            .sum()
+        )
+
+        regional_intensity = (
+            positive_demand / positive_population
+            if positive_population > 0
+            else np.nan
+        )
+
+        for _, row in region_rows.iterrows():
+            iso3 = row["ISO3"]
+            base_demand = row[BASE_YEAR]
+
+            if iso3 not in population_by_iso3.index:
+                projection_issues.append((iso3, "missing population row"))
+                continue
+
+            if pd.notna(base_demand) and base_demand > 0:
+                weight = base_demand
+            else:
+                base_population = population_by_iso3.at[iso3, BASE_YEAR]
+                if pd.isna(regional_intensity) or regional_intensity <= 0:
+                    projection_issues.append((iso3, "no WCA base allocation weight"))
+                    continue
+
+                if pd.isna(base_population) or base_population <= 0:
+                    projection_issues.append((iso3, f"missing/zero population in {BASE_YEAR}"))
+                    continue
+
+                weight = regional_intensity * base_population
+                projection_imputations.append(
+                    (iso3, f"regional average base intensity from {region}")
+                )
+
+            base_weights[iso3] = weight
+
+    weight_by_region = {}
+    for iso3, weight in base_weights.items():
+        region = wca_region_by_iso3[iso3]
+        weight_by_region[region] = weight_by_region.get(region, 0) + weight
 
     for idx, row in projected.iterrows():
         iso3 = row["ISO3"]
+        region = row["WCARegion"]
 
-        if iso3 not in gdp_by_iso3.index:
-            projection_issues.append((iso3, "missing GDP projection"))
+        if pd.isna(region) or iso3 not in base_weights:
             continue
 
-        if iso3 not in population_by_iso3.index:
-            projection_issues.append((iso3, "missing population row"))
+        region_weight = weight_by_region.get(region, 0)
+        if region_weight <= 0:
+            projection_issues.append((iso3, f"zero regional allocation weight for {region}"))
             continue
 
-        base_population = population_by_iso3.at[iso3, base_year]
-        if pd.isna(base_population) or base_population <= 0:
-            projection_issues.append((iso3, f"missing/zero population in {base_year}"))
-            continue
+        country_share = base_weights[iso3] / region_weight
 
-        if pd.notna(row[base_year]) and row[base_year] > 0:
-            cement_per_capita = row[base_year] / base_population
-        else:
-            region = gdp_by_iso3.at[iso3, "OMNIA"] if "OMNIA" in gdp_by_iso3.columns else np.nan
-            cement_per_capita = regional_base_intensities.get(region, global_base_intensity)
+        for year in range(start_year, end_year + 1):
+            projected.at[idx, year] = country_share * wca_region_total_kt(region, year)
 
-            if pd.isna(cement_per_capita) or cement_per_capita <= 0:
-                projection_issues.append((iso3, "no regional base cement intensity"))
-                continue
+    projected = projected.drop(columns=["WCARegion"])
 
-            projection_imputations.append((iso3, f"regional average base intensity from {region}"))
-
-        for year in range(base_year + 1, end_year + 1):
-            previous_year = year - 1
-
-            if year not in population_by_iso3.columns:
-                projection_issues.append((iso3, f"missing population column {year}"))
-                break
-
-            if year not in gdp_by_iso3.columns or previous_year not in gdp_by_iso3.columns:
-                projection_issues.append((iso3, f"missing GDP column {previous_year}/{year}"))
-                break
-
-            previous_population = population_by_iso3.at[iso3, previous_year]
-            current_population = population_by_iso3.at[iso3, year]
-            previous_gdp = gdp_by_iso3.at[iso3, previous_year]
-            current_gdp = gdp_by_iso3.at[iso3, year]
-
-            required_values = [
-                previous_population,
-                current_population,
-                previous_gdp,
-                current_gdp,
-            ]
-            if any(pd.isna(value) or value <= 0 for value in required_values):
-                projection_issues.append((iso3, f"missing/zero driver in {previous_year}/{year}"))
-                break
-
-            previous_gdp_per_capita = previous_gdp / previous_population
-            current_gdp_per_capita = current_gdp / current_population
-
-            elasticity = cement_income_elasticity(cement_per_capita)
-            cement_per_capita = cement_per_capita * (
-                current_gdp_per_capita / previous_gdp_per_capita
-            ) ** elasticity
-
-            projected.at[idx, year] = cement_per_capita * current_population
-
-    return projected, projection_issues, projection_imputations
+    return projected, projection_issues, projection_imputations, wca_region_by_iso3
 
 
 # -------------------------------------------------------------------
@@ -514,24 +561,17 @@ population_rows["Unit"] = POPULATION_UNIT
 
 
 # -------------------------------------------------------------------
-# Backcast GDP to support a 2014 projection anchor
+# Project cement demand using fixed country shares and WCA regional trends
 # -------------------------------------------------------------------
-gdp, gdp_backcast_issues = backcast_gdp_to_base_year(
-    gdp=gdp,
-    population_rows=population_rows,
-    base_year=BASE_YEAR,
-)
-
-
-# -------------------------------------------------------------------
-# Project cement demand from 2014 using elasticity
-# -------------------------------------------------------------------
-cement_rows, projection_issues, projection_imputations = project_cement_demand_from_base(
-    cement_rows=cement_rows,
-    population_rows=population_rows,
-    gdp=gdp,
-    base_year=BASE_YEAR,
-    end_year=END_YEAR,
+cement_rows, projection_issues, projection_imputations, wca_region_by_iso3 = (
+    project_cement_demand_wca_fixed_shares(
+        cement_rows=cement_rows,
+        population_rows=population_rows,
+        country_ref=country_ref,
+        gdp=gdp,
+        start_year=PROJECTION_START_YEAR,
+        end_year=END_YEAR,
+    )
 )
 
 
@@ -603,29 +643,36 @@ if final_df[["Country", "ISO2", "ISO3"]].isna().any().any():
 # -------------------------------------------------------------------
 # Save output
 # -------------------------------------------------------------------
-final_df.to_excel(output_path, index=False)
+OUTPUTS_DIR.mkdir(exist_ok=True)
+MAPS_DIR.mkdir(exist_ok=True)
+final_df.to_csv(output_path, index=False)
+
+wca_mapping_df = country_ref[["Country", "ISO2", "ISO3"]].copy()
+wca_mapping_df["WCARegion"] = wca_mapping_df["ISO3"].map(wca_region_by_iso3)
+wca_mapping_df = wca_mapping_df.sort_values(["WCARegion", "Country"])
+wca_mapping_df.to_csv(wca_mapping_output_path, index=False)
 
 print(f"Done. File saved as: {output_path}")
+print(f"WCA country-region mapping saved as: {wca_mapping_output_path}")
 print(f"Cement demand rows added: {len(cement_rows)}")
 print(f"Population rows added: {len(population_rows)}")
 print(f"Final rows: {len(final_df)}")
 print(f"Historical cement years retained: {START_YEAR}-{BASE_YEAR}")
-print(f"Elasticity projection years filled: {PROJECTION_START_YEAR}-{END_YEAR}")
-print(f"GDP backcast years estimated: {BASE_YEAR}-{GDP_BACKCAST_END_YEAR - 1}")
-print(f"GDP backcast issues: {len(gdp_backcast_issues)}")
-if gdp_backcast_issues:
-    print("First GDP backcast issues:")
-    for iso3, issue in gdp_backcast_issues[:20]:
-        print(f"  {iso3}: {issue}")
-print(f"Cement projection regional intensity imputations: {len(projection_imputations)}")
+print(f"WCA fixed-share projection years filled: {PROJECTION_START_YEAR}-{END_YEAR}")
+print(f"WCA mapped countries: {len(wca_region_by_iso3)}")
+print(f"WCA fixed-share regional intensity imputations: {len(projection_imputations)}")
 if projection_imputations:
     print("First regional intensity imputations:")
     for iso3, note in projection_imputations[:20]:
         print(f"  {iso3}: {note}")
-print(f"Cement projection issues: {len(projection_issues)}")
+print(f"WCA fixed-share projection issues: {len(projection_issues)}")
 if projection_issues:
     print("First projection issues:")
     for iso3, issue in projection_issues[:20]:
         print(f"  {iso3}: {issue}")
+print("WCA fixed-share regional totals from output, Mt:")
+for year in [2024, 2035, 2050, 2100]:
+    total_mt = cement_rows[year].sum(skipna=True) / 1000
+    print(f"  {year}: {total_mt:.3f}")
 print("Final columns:")
 print(final_df.columns.tolist())

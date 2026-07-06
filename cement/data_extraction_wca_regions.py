@@ -1,4 +1,6 @@
 import re
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
@@ -6,15 +8,21 @@ import pandas as pd
 # -------------------------------------------------------------------
 # File paths
 # -------------------------------------------------------------------
-pop_path = "undesa_pop.xlsx"
+BASE_DIR = Path(__file__).resolve().parent
+INPUTS_DIR = BASE_DIR / "inputs"
+MAPS_DIR = BASE_DIR / "maps"
+OUTPUTS_DIR = BASE_DIR / "outputs"
+
+pop_path = INPUTS_DIR / "undesa_pop.xlsx"
+gdp_path = INPUTS_DIR / "gdp_projection_country_SSP2.xlsx"
 
 cement_url = (
     "https://zenodo.org/records/20397304/files/"
     "1.%20annual_cement_production.csv?download=1"
 )
 
-output_path = "cement_demand_with_population_wca_regions.xlsx"
-wca_mapping_output_path = "wca_country_region_mapping.csv"
+output_path = OUTPUTS_DIR / "cement_demand_with_population_wca_regions.csv"
+wca_mapping_output_path = MAPS_DIR / "wca_country_region_mapping.csv"
 
 
 # -------------------------------------------------------------------
@@ -32,6 +40,18 @@ DEMAND_UNIT = "kt cement"
 
 POPULATION_METRIC = "Population"
 POPULATION_UNIT = ""
+
+ELASTICITY_POINTS = [
+    (0.0, 1.264),
+    (0.1, 1.1),
+    (0.2, 1.109),
+    (0.3, 0.6),
+    (0.4, 0.336),
+    (0.5, 0.18),
+    (0.6, -0.027),
+    (0.7, -0.041),
+    (0.8, -0.252),
+]
 
 
 # Regional cement consumption from the WCA table extracted to cement.docx.
@@ -209,12 +229,50 @@ def remove_global_rows(df):
     return df[~mask].copy()
 
 
+def cement_income_elasticity(cement_output_per_capita):
+    """
+    Return cement income elasticity from Dirk's cement-output-per-capita table.
+
+    Cement output per capita is expressed as tonnes per person. Values outside
+    the table range are clamped to the nearest endpoint.
+    """
+    points = np.array(ELASTICITY_POINTS, dtype=float)
+    return np.interp(
+        cement_output_per_capita,
+        points[:, 0],
+        points[:, 1],
+        left=points[0, 1],
+        right=points[-1, 1],
+    )
+
+
+def read_gdp_projection(path):
+    """
+    Read annual GDP projections and normalise year-like column names.
+    """
+    gdp = read_excel_normalised(path)
+
+    required_columns = {"Country", "ISO2", "ISO3", "OMNIA"}
+    missing_columns = required_columns - set(gdp.columns)
+    if missing_columns:
+        raise ValueError(
+            "GDP projection file is missing required columns: "
+            f"{sorted(missing_columns)}"
+        )
+
+    gdp["ISO3"] = gdp["ISO3"].astype(str).str.strip()
+    gdp = remove_global_rows(gdp)
+
+    return gdp
+
+
 def wca_region_total_kt(region, year):
     """
     Return WCA regional cement consumption target in kt.
 
-    Values are linearly interpolated between WCA table years and held constant
-    after 2050 because the source table stops there.
+    Values are linearly interpolated between WCA table years. Calls after the
+    final table year return the final table value; post-2050 growth is applied
+    separately in the projection function.
     """
     points = WCA_REGION_CONSUMPTION_MTPA[region]
     years = sorted(points)
@@ -233,21 +291,17 @@ def wca_region_total_kt(region, year):
     return value_mt * 1000
 
 
-def build_wca_region_map(country_ref):
+def build_wca_region_map(country_ref, gdp):
     """
     Map countries to WCA regions using ISO overrides and OMNIA groups.
     """
-    try:
-        gdp = read_excel_normalised("gdp_projection_country_SSP2.xlsx")
-        omnia_by_iso3 = (
-            gdp[["ISO3", "OMNIA"]]
-            .dropna(subset=["ISO3", "OMNIA"])
-            .assign(ISO3=lambda df: df["ISO3"].astype(str).str.strip())
-            .set_index("ISO3")["OMNIA"]
-            .to_dict()
-        )
-    except FileNotFoundError:
-        omnia_by_iso3 = {}
+    omnia_by_iso3 = (
+        gdp[["ISO3", "OMNIA"]]
+        .dropna(subset=["ISO3", "OMNIA"])
+        .assign(ISO3=lambda df: df["ISO3"].astype(str).str.strip())
+        .set_index("ISO3")["OMNIA"]
+        .to_dict()
+    )
 
     mapping = {}
     unmapped = []
@@ -267,14 +321,23 @@ def build_wca_region_map(country_ref):
     return mapping, unmapped
 
 
-def project_cement_demand_wca(cement_rows, population_rows, country_ref, start_year, end_year):
+def project_cement_demand_wca(cement_rows, population_rows, country_ref, gdp, start_year, end_year):
     """
-    Project country cement demand by preserving regional country shares against
-    WCA regional totals.
+    Project country cement demand with dynamic country shares constrained to WCA
+    regional totals.
+
+    Country demand first follows the GDP-per-capita elasticity method. For years
+    covered by the WCA table, each country's unconstrained demand is scaled so
+    its region exactly matches the WCA regional total. After the final WCA table
+    year, regional totals follow the region's unconstrained growth from that
+    final table year rather than staying flat.
     """
     projected = cement_rows.copy()
     population_by_iso3 = population_rows.set_index("ISO3")
-    wca_region_by_iso3, unmapped = build_wca_region_map(country_ref)
+    gdp_by_iso3 = gdp.set_index("ISO3")
+    final_wca_year = max(max(points) for points in WCA_REGION_CONSUMPTION_MTPA.values())
+
+    wca_region_by_iso3, unmapped = build_wca_region_map(country_ref, gdp)
     projected["WCARegion"] = projected["ISO3"].map(wca_region_by_iso3)
 
     projection_issues = [(iso3, "missing WCA region mapping") for iso3 in unmapped]
@@ -284,7 +347,8 @@ def project_cement_demand_wca(cement_rows, population_rows, country_ref, start_y
         for iso3 in projected.loc[projected["WCARegion"].isna(), "ISO3"]:
             projection_issues.append((iso3, "missing WCA region mapping"))
 
-    base_weights = {}
+    unconstrained = {}
+    region_by_projected_iso3 = {}
 
     for region, region_rows in projected.dropna(subset=["WCARegion"]).groupby("WCARegion"):
         region_rows = region_rows.copy()
@@ -312,42 +376,144 @@ def project_cement_demand_wca(cement_rows, population_rows, country_ref, start_y
             iso3 = row["ISO3"]
             base_demand = row[BASE_YEAR]
 
+            if iso3 not in population_by_iso3.index:
+                projection_issues.append((iso3, "missing population row"))
+                continue
+
+            has_gdp_driver = iso3 in gdp_by_iso3.index
+            if not has_gdp_driver:
+                projection_imputations.append(
+                    (iso3, "constant cement intensity; missing GDP projection")
+                )
+
+            base_population = population_by_iso3.at[iso3, BASE_YEAR]
+            if pd.isna(base_population) or base_population <= 0:
+                projection_issues.append((iso3, f"missing/zero population in {BASE_YEAR}"))
+                continue
+
             if pd.notna(base_demand) and base_demand > 0:
-                weight = base_demand
+                cement_per_capita = base_demand / base_population
             else:
-                population = population_by_iso3.at[iso3, BASE_YEAR]
-                if pd.isna(population) or population <= 0 or pd.isna(regional_intensity):
+                if pd.isna(regional_intensity) or regional_intensity <= 0:
                     projection_issues.append((iso3, "no WCA base allocation weight"))
                     continue
 
-                weight = regional_intensity * population
+                cement_per_capita = regional_intensity
                 projection_imputations.append(
                     (iso3, f"regional average base intensity from {region}")
                 )
 
-            base_weights[iso3] = weight
+            unconstrained[iso3] = {}
+            region_by_projected_iso3[iso3] = region
 
-    weight_by_region = {}
-    for iso3, weight in base_weights.items():
-        region = wca_region_by_iso3[iso3]
-        weight_by_region[region] = weight_by_region.get(region, 0) + weight
+            for year in range(BASE_YEAR + 1, end_year + 1):
+                previous_year = year - 1
+
+                if year not in population_by_iso3.columns:
+                    projection_issues.append((iso3, f"missing population column {year}"))
+                    break
+
+                current_population = population_by_iso3.at[iso3, year]
+                if pd.isna(current_population) or current_population <= 0:
+                    projection_issues.append((iso3, f"missing/zero population in {year}"))
+                    break
+
+                if not has_gdp_driver:
+                    unconstrained[iso3][year] = cement_per_capita * current_population
+                    continue
+
+                if year not in gdp_by_iso3.columns or previous_year not in gdp_by_iso3.columns:
+                    projection_issues.append((iso3, f"missing GDP column {previous_year}/{year}"))
+                    break
+
+                previous_population = population_by_iso3.at[iso3, previous_year]
+                previous_gdp = gdp_by_iso3.at[iso3, previous_year]
+                current_gdp = gdp_by_iso3.at[iso3, year]
+
+                required_values = [
+                    previous_population,
+                    current_population,
+                    previous_gdp,
+                    current_gdp,
+                ]
+                if any(pd.isna(value) or value <= 0 for value in required_values):
+                    projection_issues.append((iso3, f"missing/zero driver in {previous_year}/{year}"))
+                    break
+
+                previous_gdp_per_capita = previous_gdp / previous_population
+                current_gdp_per_capita = current_gdp / current_population
+
+                elasticity = cement_income_elasticity(cement_per_capita)
+                cement_per_capita = cement_per_capita * (
+                    current_gdp_per_capita / previous_gdp_per_capita
+                ) ** elasticity
+
+                unconstrained[iso3][year] = cement_per_capita * current_population
+
+    region_unconstrained_totals = {}
+    for iso3, values in unconstrained.items():
+        region = region_by_projected_iso3[iso3]
+        region_unconstrained_totals.setdefault(region, {})
+        for year, value in values.items():
+            region_unconstrained_totals[region][year] = (
+                region_unconstrained_totals[region].get(year, 0) + value
+            )
+
+    region_targets = {}
+    for region in region_unconstrained_totals:
+        region_targets[region] = {}
+        final_table_total = wca_region_total_kt(region, final_wca_year)
+        final_unconstrained_total = region_unconstrained_totals[region].get(final_wca_year)
+
+        for year in range(start_year, end_year + 1):
+            if year <= final_wca_year:
+                region_targets[region][year] = wca_region_total_kt(region, year)
+                continue
+
+            current_unconstrained_total = region_unconstrained_totals[region].get(year)
+            if (
+                pd.isna(final_unconstrained_total) or
+                final_unconstrained_total <= 0 or
+                pd.isna(current_unconstrained_total) or
+                current_unconstrained_total <= 0
+            ):
+                region_targets[region][year] = final_table_total
+                projection_issues.append(
+                    (region, f"holding WCA total after {final_wca_year}; missing unconstrained growth")
+                )
+                continue
+
+            region_targets[region][year] = (
+                final_table_total *
+                current_unconstrained_total /
+                final_unconstrained_total
+            )
 
     for idx, row in projected.iterrows():
         iso3 = row["ISO3"]
         region = row["WCARegion"]
 
-        if pd.isna(region) or iso3 not in base_weights:
+        if pd.isna(region) or iso3 not in unconstrained:
             continue
-
-        region_weight = weight_by_region.get(region, 0)
-        if region_weight <= 0:
-            projection_issues.append((iso3, f"zero regional allocation weight for {region}"))
-            continue
-
-        country_share = base_weights[iso3] / region_weight
 
         for year in range(start_year, end_year + 1):
-            projected.at[idx, year] = country_share * wca_region_total_kt(region, year)
+            unconstrained_country_demand = unconstrained[iso3].get(year)
+            unconstrained_region_demand = region_unconstrained_totals.get(region, {}).get(year)
+            regional_target = region_targets.get(region, {}).get(year)
+
+            if (
+                pd.isna(unconstrained_country_demand) or
+                pd.isna(unconstrained_region_demand) or
+                pd.isna(regional_target) or
+                unconstrained_region_demand <= 0
+            ):
+                continue
+
+            projected.at[idx, year] = (
+                unconstrained_country_demand *
+                regional_target /
+                unconstrained_region_demand
+            )
 
     projected = projected.drop(columns=["WCARegion"])
 
@@ -408,6 +574,12 @@ country_ref["ISO3"] = country_ref["ISO3"].astype(str).str.strip()
 country_ref.loc[country_ref["ISO3"] == "NAM", "ISO2"] = "NA"
 
 country_ref = remove_global_rows(country_ref)
+
+
+# -------------------------------------------------------------------
+# Read GDP projection data
+# -------------------------------------------------------------------
+gdp = read_gdp_projection(gdp_path)
 
 
 # -------------------------------------------------------------------
@@ -520,6 +692,7 @@ cement_rows, projection_issues, projection_imputations, wca_region_by_iso3 = (
         cement_rows=cement_rows,
         population_rows=population_rows,
         country_ref=country_ref,
+        gdp=gdp,
         start_year=PROJECTION_START_YEAR,
         end_year=END_YEAR,
     )
@@ -594,7 +767,9 @@ if final_df[["Country", "ISO2", "ISO3"]].isna().any().any():
 # -------------------------------------------------------------------
 # Save output
 # -------------------------------------------------------------------
-final_df.to_excel(output_path, index=False)
+OUTPUTS_DIR.mkdir(exist_ok=True)
+MAPS_DIR.mkdir(exist_ok=True)
+final_df.to_csv(output_path, index=False)
 
 wca_mapping_df = country_ref[["Country", "ISO2", "ISO3"]].copy()
 wca_mapping_df["WCARegion"] = wca_mapping_df["ISO3"].map(wca_region_by_iso3)
