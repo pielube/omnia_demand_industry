@@ -25,8 +25,16 @@ Most generated outputs are kept as `.csv`. The workbook in `outputs/` is the fin
 3. Read UN DESA population data from `inputs/undesa_pop.xlsx`, keeping country-level Medium variant values.
 4. Create population rows and per-capita steel consumption rows.
 5. Combine the original end-use rows, population rows, per-capita rows, and total scrap rows into one output file.
+6. Extract OMNIA-region steel production and scrap projections from the `OMNIA_Data` sheet of the final workbook using `extract_omnia_region_projections.py`.
+7. Plot the nine largest 2019 OMNIA regions for steel production and scrap using `plot_omnia_region_projection_top9.py`.
 
 ## Final Output
 
 - `outputs/steel_demand_and_scrap.csv`
 - `outputs/Steel_demand_and_scrap_projections [SP].xlsx`: final output used to compute steel production for OMNIA.
+- `outputs/steel_production_omnia_region_projection_2019_2050.csv`
+- `outputs/steel_production_omnia_region_growth_2019_2050.csv`
+- `outputs/steel_scrap_omnia_region_projection_2019_2050.csv`
+- `outputs/steel_scrap_omnia_region_growth_2019_2050.csv`
+- `outputs/figures/steel_production_omnia_regions_top9_2019_3x3.pdf`
+- `outputs/figures/steel_scrap_omnia_regions_top9_2019_3x3.pdf`
