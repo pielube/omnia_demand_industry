@@ -4,6 +4,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from wca_regional_consumption import (
+    read_wca_regional_consumption,
+    regional_consumption_by_year,
+)
+
 
 # -------------------------------------------------------------------
 # File paths
@@ -14,7 +19,10 @@ MAPS_DIR = BASE_DIR / "maps"
 OUTPUTS_DIR = BASE_DIR / "outputs"
 
 pop_path = INPUTS_DIR / "undesa_pop.xlsx"
-gdp_path = INPUTS_DIR / "gdp_projection_country_SSP2.xlsx"
+wca_consumption_path = (
+    INPUTS_DIR / "wca_regional_cement_consumption_rescaled.csv"
+)
+wca_mapping_path = MAPS_DIR / "wca_country_region_mapping.csv"
 
 cement_url = (
     "https://zenodo.org/records/20397304/files/"
@@ -22,7 +30,6 @@ cement_url = (
 )
 
 output_path = OUTPUTS_DIR / "cement_demand_with_population_wca_fixed_shares.csv"
-wca_mapping_output_path = MAPS_DIR / "wca_country_region_mapping_fixed_shares.csv"
 
 
 # -------------------------------------------------------------------
@@ -41,108 +48,10 @@ DEMAND_UNIT = "kt cement"
 POPULATION_METRIC = "Population"
 POPULATION_UNIT = ""
 
-# Regional cement consumption from the WCA table extracted to cement.docx.
-# Units are Mtpa. The table header has a typo ("20235"), interpreted as 2035.
-WCA_REGION_CONSUMPTION_MTPA = {
-    "China": {2020: 2411, 2024: 1825, 2035: 1183, 2050: 928},
-    "North America": {2020: 115, 2024: 120, 2035: 131, 2050: 138},
-    "W Europe": {2020: 131, 2024: 126, 2035: 129, 2050: 125},
-    "E Europe & Turkey": {2020: 120, 2024: 127, 2035: 129, 2050: 125},
-    "Oceania": {2020: 12, 2024: 12, 2035: 13, 2050: 14},
-    "NE Asia": {2020: 97, 2024: 97, 2035: 89, 2050: 85},
-    "SE Asia": {2020: 236, 2024: 240, 2035: 275, 2050: 297},
-    "North Africa": {2020: 93, 2024: 97, 2035: 111, 2050: 131},
-    "Latin America": {2020: 164, 2024: 176, 2035: 202, 2050: 215},
-    "CIS": {2020: 97, 2024: 116, 2035: 127, 2050: 136},
-    "Middle East": {2020: 196, 2024: 208, 2035: 235, 2050: 254},
-    "South Asia": {2020: 392, 2024: 537, 2035: 813, 2050: 908},
-    "Sub Saharan Africa": {2020: 130, 2024: 153, 2035: 207, 2050: 308},
-}
-
-
-WCA_REGION_BY_OMNIA = {
-    "AFE": "Sub Saharan Africa",
-    "AFN": "North Africa",
-    "AFW": "Sub Saharan Africa",
-    "AFZ": "Sub Saharan Africa",
-    "ANZ": "Oceania",
-    "ASC": "CIS",
-    "ASE": "SE Asia",
-    "ASO": "South Asia",
-    "BRA": "Latin America",
-    "CAN": "North America",
-    "CHL": "Latin America",
-    "CHN": "China",
-    "ENE": "E Europe & Turkey",
-    "ENW": "W Europe",
-    "EUE": "E Europe & Turkey",
-    "EUM": "W Europe",
-    "EUW": "W Europe",
-    "IDN": "SE Asia",
-    "IND": "South Asia",
-    "JPN": "NE Asia",
-    "LAM": "Latin America",
-    "MDA": "Middle East",
-    "MEA": "Middle East",
-    "MEX": "Latin America",
-    "NIG": "Sub Saharan Africa",
-    "RUS": "CIS",
-    "SKT": "NE Asia",
-    "USA": "North America",
-}
-
-
-WCA_REGION_BY_ISO3_OVERRIDE = {
-    # WCA-specific split from the broader OMNIA Middle East group.
-    "TUR": "E Europe & Turkey",
-
-    # Pacific islands assigned to Oceania rather than the broader OMNIA SE Asia group.
-    "COK": "Oceania",
-    "FJI": "Oceania",
-    "FSM": "Oceania",
-    "KIR": "Oceania",
-    "MHL": "Oceania",
-    "NCL": "Oceania",
-    "NRU": "Oceania",
-    "NIU": "Oceania",
-    "PLW": "Oceania",
-    "PNG": "Oceania",
-    "PYF": "Oceania",
-    "SLB": "Oceania",
-    "TON": "Oceania",
-    "TUV": "Oceania",
-    "VUT": "Oceania",
-    "WLF": "Oceania",
-    "WSM": "Oceania",
-
-    # Countries and territories absent from the GDP/OMNIA file.
-    "AFG": "South Asia",
-    "AIA": "Latin America",
-    "AND": "W Europe",
-    "BES": "Latin America",
-    "BMU": "North America",
-    "CYM": "Latin America",
-    "CUW": "Latin America",
-    "DMA": "Latin America",
-    "FLK": "Latin America",
-    "FRO": "W Europe",
-    "GIB": "W Europe",
-    "GLP": "Latin America",
-    "GRL": "North America",
-    "GUF": "Latin America",
-    "KNA": "Latin America",
-    "LIE": "W Europe",
-    "MSR": "Latin America",
-    "MTQ": "Latin America",
-    "PSE": "Middle East",
-    "REU": "Sub Saharan Africa",
-    "SHN": "Sub Saharan Africa",
-    "SPM": "North America",
-    "SXM": "Latin America",
-    "SYR": "Middle East",
-    "TCA": "Latin America",
-    "VGB": "Latin America",
-}
+# Regional cement consumption in Mtpa, loaded from the shared WCA input CSV.
+WCA_REGION_CONSUMPTION_MTPA = regional_consumption_by_year(
+    read_wca_regional_consumption(wca_consumption_path)
+)
 
 
 # -------------------------------------------------------------------
@@ -216,26 +125,6 @@ def remove_global_rows(df):
     return df[~mask].copy()
 
 
-def read_gdp_projection(path):
-    """
-    Read annual GDP projections and normalise year-like column names.
-    """
-    gdp = read_excel_normalised(path)
-
-    required_columns = {"Country", "ISO2", "ISO3", "OMNIA"}
-    missing_columns = required_columns - set(gdp.columns)
-    if missing_columns:
-        raise ValueError(
-            "GDP projection file is missing required columns: "
-            f"{sorted(missing_columns)}"
-        )
-
-    gdp["ISO3"] = gdp["ISO3"].astype(str).str.strip()
-    gdp = remove_global_rows(gdp)
-
-    return gdp
-
-
 def wca_region_total_kt(region, year):
     """
     Return WCA regional cement consumption target in kt.
@@ -267,37 +156,79 @@ def wca_region_total_kt(region, year):
     return value_mt * 1000
 
 
-def build_wca_region_map(country_ref, gdp):
+def read_wca_region_map(path, country_ref):
     """
-    Map countries to WCA regions using ISO overrides and OMNIA groups.
+    Read and validate the authoritative country-to-WCA-region mapping.
     """
-    omnia_by_iso3 = (
-        gdp[["ISO3", "OMNIA"]]
-        .dropna(subset=["ISO3", "OMNIA"])
-        .assign(ISO3=lambda df: df["ISO3"].astype(str).str.strip())
-        .set_index("ISO3")["OMNIA"]
-        .to_dict()
+    mapping = pd.read_csv(path, dtype=str, keep_default_na=False)
+    required_columns = ["Country", "ISO2", "ISO3", "WCARegion"]
+    missing_columns = set(required_columns) - set(mapping.columns)
+    if missing_columns:
+        raise ValueError(
+            "WCA mapping file is missing required columns: "
+            f"{sorted(missing_columns)}"
+        )
+
+    mapping = mapping[required_columns].copy()
+    for column in required_columns:
+        mapping[column] = mapping[column].str.strip()
+    mapping["ISO3"] = mapping["ISO3"].str.upper()
+
+    blank_rows = mapping[
+        mapping["ISO3"].eq("") | mapping["WCARegion"].eq("")
+    ]
+    if not blank_rows.empty:
+        raise ValueError(
+            "WCA mapping file has blank ISO3 or WCARegion values:\n"
+            f"{blank_rows.to_string(index=False)}"
+        )
+
+    duplicate_iso3 = sorted(
+        mapping.loc[mapping["ISO3"].duplicated(keep=False), "ISO3"].unique()
     )
+    if duplicate_iso3:
+        raise ValueError(
+            "WCA mapping file has duplicate ISO3 values: "
+            f"{duplicate_iso3}"
+        )
 
-    mapping = {}
-    unmapped = []
+    valid_regions = set(WCA_REGION_CONSUMPTION_MTPA)
+    unknown_regions = sorted(set(mapping["WCARegion"]) - valid_regions)
+    if unknown_regions:
+        raise ValueError(
+            "WCA mapping file has regions without WCA demand totals: "
+            f"{unknown_regions}"
+        )
 
-    for iso3 in country_ref["ISO3"]:
-        if iso3 in WCA_REGION_BY_ISO3_OVERRIDE:
-            mapping[iso3] = WCA_REGION_BY_ISO3_OVERRIDE[iso3]
-            continue
+    missing_regions = sorted(valid_regions - set(mapping["WCARegion"]))
+    if missing_regions:
+        raise ValueError(
+            "WCA mapping file does not represent all WCA regions: "
+            f"{missing_regions}"
+        )
 
-        omnia = omnia_by_iso3.get(iso3)
-        region = WCA_REGION_BY_OMNIA.get(omnia)
-        if region:
-            mapping[iso3] = region
-        else:
-            unmapped.append(iso3)
+    required_iso3 = set(
+        country_ref["ISO3"].dropna().astype(str).str.strip().str.upper()
+    )
+    mapped_iso3 = set(mapping["ISO3"])
+    missing_iso3 = sorted(required_iso3 - mapped_iso3)
+    if missing_iso3:
+        raise ValueError(
+            "WCA mapping file does not cover all cement countries. "
+            f"Missing ISO3 values: {missing_iso3}"
+        )
 
-    return mapping, unmapped
+    region_by_iso3 = mapping.set_index("ISO3")["WCARegion"].to_dict()
+    return {iso3: region_by_iso3[iso3] for iso3 in sorted(required_iso3)}
 
 
-def project_cement_demand_wca_fixed_shares(cement_rows, population_rows, country_ref, gdp, start_year, end_year):
+def project_cement_demand_wca_fixed_shares(
+    cement_rows,
+    population_rows,
+    wca_region_by_iso3,
+    start_year,
+    end_year,
+):
     """
     Project country cement demand by preserving fixed country shares inside
     each WCA region.
@@ -308,10 +239,9 @@ def project_cement_demand_wca_fixed_shares(cement_rows, population_rows, country
     """
     projected = cement_rows.copy()
     population_by_iso3 = population_rows.set_index("ISO3")
-    wca_region_by_iso3, unmapped = build_wca_region_map(country_ref, gdp)
     projected["WCARegion"] = projected["ISO3"].map(wca_region_by_iso3)
 
-    projection_issues = [(iso3, "missing WCA region mapping") for iso3 in unmapped]
+    projection_issues = []
     projection_imputations = []
 
     if projected["WCARegion"].isna().any():
@@ -393,7 +323,7 @@ def project_cement_demand_wca_fixed_shares(cement_rows, population_rows, country
 
     projected = projected.drop(columns=["WCARegion"])
 
-    return projected, projection_issues, projection_imputations, wca_region_by_iso3
+    return projected, projection_issues, projection_imputations
 
 
 # -------------------------------------------------------------------
@@ -450,12 +380,6 @@ country_ref["ISO3"] = country_ref["ISO3"].astype(str).str.strip()
 country_ref.loc[country_ref["ISO3"] == "NAM", "ISO2"] = "NA"
 
 country_ref = remove_global_rows(country_ref)
-
-
-# -------------------------------------------------------------------
-# Read GDP projection data
-# -------------------------------------------------------------------
-gdp = read_gdp_projection(gdp_path)
 
 
 # -------------------------------------------------------------------
@@ -561,14 +485,19 @@ population_rows["Unit"] = POPULATION_UNIT
 
 
 # -------------------------------------------------------------------
+# Read authoritative WCA country-region mapping
+# -------------------------------------------------------------------
+wca_region_by_iso3 = read_wca_region_map(wca_mapping_path, country_ref)
+
+
+# -------------------------------------------------------------------
 # Project cement demand using fixed country shares and WCA regional trends
 # -------------------------------------------------------------------
-cement_rows, projection_issues, projection_imputations, wca_region_by_iso3 = (
+cement_rows, projection_issues, projection_imputations = (
     project_cement_demand_wca_fixed_shares(
         cement_rows=cement_rows,
         population_rows=population_rows,
-        country_ref=country_ref,
-        gdp=gdp,
+        wca_region_by_iso3=wca_region_by_iso3,
         start_year=PROJECTION_START_YEAR,
         end_year=END_YEAR,
     )
@@ -644,16 +573,11 @@ if final_df[["Country", "ISO2", "ISO3"]].isna().any().any():
 # Save output
 # -------------------------------------------------------------------
 OUTPUTS_DIR.mkdir(exist_ok=True)
-MAPS_DIR.mkdir(exist_ok=True)
 final_df.to_csv(output_path, index=False)
 
-wca_mapping_df = country_ref[["Country", "ISO2", "ISO3"]].copy()
-wca_mapping_df["WCARegion"] = wca_mapping_df["ISO3"].map(wca_region_by_iso3)
-wca_mapping_df = wca_mapping_df.sort_values(["WCARegion", "Country"])
-wca_mapping_df.to_csv(wca_mapping_output_path, index=False)
-
 print(f"Done. File saved as: {output_path}")
-print(f"WCA country-region mapping saved as: {wca_mapping_output_path}")
+print(f"WCA regional consumption loaded from: {wca_consumption_path}")
+print(f"WCA country-region mapping loaded from: {wca_mapping_path}")
 print(f"Cement demand rows added: {len(cement_rows)}")
 print(f"Population rows added: {len(population_rows)}")
 print(f"Final rows: {len(final_df)}")

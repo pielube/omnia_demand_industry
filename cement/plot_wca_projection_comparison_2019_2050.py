@@ -1,3 +1,5 @@
+"""Plot 2019-2050 WCA cement demand for the nine largest producers."""
+
 from pathlib import Path
 
 import pandas as pd
@@ -13,11 +15,11 @@ DYNAMIC_SHARE_PATH = OUTPUTS_DIR / "cement_demand_with_population_wca_regions.cs
 FIXED_SHARE_PATH = OUTPUTS_DIR / "cement_demand_with_population_wca_fixed_shares.csv"
 
 OUTPUT_DIR = OUTPUTS_DIR / "figures"
-OUTPUT_PDF = OUTPUT_DIR / "wca_projection_comparison_top9_3x3.pdf"
+OUTPUT_PDF = OUTPUT_DIR / "wca_projection_comparison_top9_2019_2050_3x3.pdf"
 
 RANK_YEAR = 2024
-START_YEAR = 2025
-END_YEAR = 2100
+START_YEAR = 2019
+END_YEAR = 2050
 COUNTRY_COUNT = 9
 
 
@@ -26,7 +28,8 @@ def read_cement_projection(path, approach):
     df.columns = [int(col) if str(col).isdigit() else col for col in df.columns]
     cement = df[df["Metric"].eq("Cement production")].copy()
     year_columns = [
-        col for col in cement.columns
+        col
+        for col in cement.columns
         if isinstance(col, int) and START_YEAR <= col <= END_YEAR
     ]
 
@@ -42,14 +45,8 @@ def read_cement_projection(path, approach):
 
 
 def make_figure():
-    dynamic = read_cement_projection(
-        DYNAMIC_SHARE_PATH,
-        "Dynamic shares",
-    )
-    fixed = read_cement_projection(
-        FIXED_SHARE_PATH,
-        "Fixed shares",
-    )
+    dynamic = read_cement_projection(DYNAMIC_SHARE_PATH, "Dynamic shares")
+    fixed = read_cement_projection(FIXED_SHARE_PATH, "Fixed shares")
 
     first_countries = (
         pd.read_csv(DYNAMIC_SHARE_PATH)
@@ -117,6 +114,7 @@ def make_figure():
             legend=False,
         )
 
+        ax.axvline(RANK_YEAR, color="0.65", linewidth=0.6, linestyle="--", zorder=0)
         ax.set_title(f"{country_name} ({iso3})", loc="left", pad=3)
         ax.set_xlabel("")
         ax.set_ylabel("")
@@ -124,16 +122,16 @@ def make_figure():
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
         ax.tick_params(length=2.5, width=0.55, color="0.2", pad=2)
-        ax.set_xlim(2025, 2100)
-
-    for ax in axes:
-        ax.set_xticks([2025, 2050, 2075, 2100])
+        ax.set_xlim(START_YEAR, END_YEAR)
         ax.margins(x=0)
 
-    fig.supxlabel("Year", fontsize=8)
+    for ax in axes:
+        ax.set_xticks([2020, 2030, 2040, 2050])
+
+    axes[7].set_xlabel("Year", fontsize=8)
     fig.supylabel("Cement demand (Mt)", fontsize=8)
     fig.suptitle(
-        "WCA cement demand projections for the nine largest cement producers",
+        "WCA cement demand: nine largest producers, 2019-2050",
         x=0.01,
         ha="left",
         fontsize=10,
@@ -141,14 +139,25 @@ def make_figure():
     )
 
     approach_handles = [
-        Line2D([0], [0], color=approach_palette["Dynamic shares"], lw=1.6, label="Dynamic shares"),
-        Line2D([0], [0], color=approach_palette["Fixed shares"], lw=1.6, label="Fixed shares"),
+        Line2D(
+            [0],
+            [0],
+            color=approach_palette["Dynamic shares"],
+            lw=1.6,
+            label="Dynamic shares",
+        ),
+        Line2D(
+            [0],
+            [0],
+            color=approach_palette["Fixed shares"],
+            lw=1.6,
+            label="Fixed shares",
+        ),
     ]
 
     fig.legend(
         handles=approach_handles,
-        loc="upper right",
-        bbox_to_anchor=(0.995, 1.0),
+        loc="outside lower center",
         frameon=False,
         ncol=2,
         handlelength=2.4,
