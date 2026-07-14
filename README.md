@@ -12,7 +12,7 @@ country-level industrial demand, production, and scrap datasets for OMNIA.
 Each sector folder follows the same basic layout:
 
 - `inputs/`: raw source files.
-- `maps/`: derived mapping or allocation files.
+- `maps/`: mapping or allocation files used by the sector workflows.
 - `outputs/`: generated CSV outputs and figures.
 - `README.md`: brief sector-specific workflow notes.
 
