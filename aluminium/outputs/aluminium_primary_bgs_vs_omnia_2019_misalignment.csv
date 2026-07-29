@@ -1,0 +1,43 @@
+Country,ISO3,OMNIARegion,ZijieRegion,OMNIA2019_kt,HistoricalSource2019,BGS2020_kt,BGSRecordPresent,BGS_Country,EstimatedYears,BGSNotes,Difference_kt,AbsoluteDifference_kt,Difference_pct_of_OMNIA2019,MisalignmentStatus,MajorMisalignment,BGS2020Estimated,MajorRelativeThreshold_pct,MajorAbsoluteThreshold_kt
+Argentina,ARG,LAM,South America,427.0,OMNIA INF_Data,309.804,True,Argentina,,,-117.19600000000003,117.19600000000003,-27.44637002341921,Major: difference exceeds absolute and relative thresholds,True,False,25.0,50.0
+Japan,JPN,JPN,Japan,90.89354286806416,Zijie back-extrapolated fallback used by old approach,0.0,False,,,,-90.89354286806416,90.89354286806416,-100.0,Major: OMNIA 2019 producer absent or nil in BGS 2020,True,False,25.0,50.0
+Netherlands,NLD,EUW,Europe,150.0,OMNIA INF_Data,70.6,True,Netherlands,2022;2023;2024,Nil values marked as estimated in the BGS table,-79.4,79.4,-52.93333333333333,Major: difference exceeds absolute and relative thresholds,True,False,25.0,50.0
+Slovakia,SVK,EUE,Europe,220.0,OMNIA INF_Data,151.875,True,Slovakia,,,-68.125,68.125,-30.96590909090909,Major: difference exceeds absolute and relative thresholds,True,False,25.0,50.0
+Bosnia and Herzegovina,BIH,ENE,Rest of World,55.0,OMNIA INF_Data,0.0,True,Bosnia & Herzegovina,,,-55.0,55.0,-100.0,Major: OMNIA 2019 producer absent or nil in BGS 2020,True,False,25.0,50.0
+China,CHN,CHN,China,35044.0,OMNIA INF_Data,37080.401,True,China,,,2036.400999999998,2036.400999999998,5.810983335235698,Review: absolute threshold exceeded,False,False,25.0,50.0
+Canada,CAN,CAN,North America,2854.0,OMNIA INF_Data,3154.493,True,Canada,,,300.49299999999994,300.49299999999994,10.52883672039243,Review: absolute threshold exceeded,False,False,25.0,50.0
+Russian Federation,RUS,RUS,Other main producer,3637.0,OMNIA INF_Data,3936.0,True,Russia,,,299.0,299.0,8.221061314270003,Review: absolute threshold exceeded,False,False,25.0,50.0
+Bahrain,BHR,MEA,Middle East,1365.0,OMNIA INF_Data,1548.0,True,Bahrain,,,183.0,183.0,13.406593406593407,Review: absolute threshold exceeded,False,False,25.0,50.0
+Iceland,ISL,ENW,Europe,845.0,OMNIA INF_Data,728.104,True,Iceland,,,-116.89599999999996,116.89599999999996,-13.83384615384615,Review: absolute threshold exceeded,False,False,25.0,50.0
+Iran (Islamic Republic of),IRN,MEA,Middle East,360.0,OMNIA INF_Data,446.836,True,Iran,,Years ended 20 March following the stated year,86.83600000000001,86.83600000000001,24.121111111111116,Review: absolute threshold exceeded,False,False,25.0,50.0
+United Arab Emirates,ARE,MEA,Middle East,2600.0,OMNIA INF_Data,2520.0,True,United Arab Emirates,,,-80.0,80.0,-3.076923076923077,Review: absolute threshold exceeded,False,False,25.0,50.0
+Norway,NOR,ENW,Europe,1400.0,OMNIA INF_Data,1330.0,True,Norway,,,-70.0,70.0,-5.0,Review: absolute threshold exceeded,False,False,25.0,50.0
+United States of America,USA,USA,North America,1090.0,OMNIA INF_Data,1026.617,True,USA,2023;2024,,-63.38300000000004,63.38300000000004,-5.8149541284403705,Review: absolute threshold exceeded,False,False,25.0,50.0
+Malaysia,MYS,ASE,Other Asia,760.0,OMNIA INF_Data,800.0,True,Malaysia,2020;2023;2024,,40.0,40.0,5.263157894736842,Within thresholds,False,True,25.0,50.0
+Spain,ESP,EUM,Europe,240.0,OMNIA INF_Data,200.0,True,Spain,2020;2021,,-40.0,40.0,-16.666666666666664,Within thresholds,False,True,25.0,50.0
+Brazil,BRA,BRA,South America,650.0,OMNIA INF_Data,685.1,True,Brazil,,,35.10000000000002,35.10000000000002,5.400000000000003,Within thresholds,False,False,25.0,50.0
+Egypt,EGY,AFN,Other main producer,300.0,OMNIA INF_Data,268.0,True,Egypt,2021;2022,Years ended 30 June of the stated year,-32.0,32.0,-10.666666666666668,Within thresholds,False,False,25.0,50.0
+Slovenia,SVN,EUE,Europe,80.0,OMNIA INF_Data,50.185,True,Slovenia,,,-29.814999999999998,29.814999999999998,-37.26875,Review: relative threshold exceeded,False,False,25.0,50.0
+Qatar,QAT,MEA,Middle East,627.0,OMNIA INF_Data,655.0,True,Qatar,,,28.0,28.0,4.4657097288676235,Within thresholds,False,False,25.0,50.0
+Montenegro,MNE,ENE,Europe,60.0,OMNIA INF_Data,37.208,True,Montenegro,,,-22.792,22.792,-37.98666666666667,Review: relative threshold exceeded,False,False,25.0,50.0
+Germany,DEU,EUW,Europe,550.0,OMNIA INF_Data,529.056,True,Germany,,,-20.94399999999996,20.94399999999996,-3.8079999999999927,Within thresholds,False,False,25.0,50.0
+India,IND,IND,Other Asia,3640.0,OMNIA INF_Data,3619.237,True,India,2022,Years ended 31 March following the stated year,-20.76299999999992,20.76299999999992,-0.5704120879120856,Within thresholds,False,False,25.0,50.0
+Indonesia,IDN,IDN,Other Asia,240.0,OMNIA INF_Data,220.1,True,Indonesia,,,-19.900000000000006,19.900000000000006,-8.29166666666667,Within thresholds,False,False,25.0,50.0
+Azerbaijan,AZE,ASC,Other main producer,50.0,OMNIA INF_Data,31.492,True,Azerbaijan,,,-18.508,18.508,-37.016,Review: relative threshold exceeded,False,False,25.0,50.0
+Tajikistan,TJK,ASC,Rest of World,100.0,OMNIA INF_Data,84.0,True,Tajikistan,2022,,-16.0,16.0,-16.0,Within thresholds,False,False,25.0,50.0
+New Zealand,NZL,ANZ,Other main producer,351.0,OMNIA INF_Data,335.405,True,New Zealand,,,-15.595000000000027,15.595000000000027,-4.443019943019951,Within thresholds,False,False,25.0,50.0
+France,FRA,EUM,Europe,430.0,OMNIA INF_Data,417.0,True,France,,,-13.0,13.0,-3.0232558139534884,Within thresholds,False,False,25.0,50.0
+Australia,AUS,ANZ,Other main producer,1570.0,OMNIA INF_Data,1582.947,True,Australia,,,12.946999999999889,12.946999999999889,0.8246496815286555,Within thresholds,False,False,25.0,50.0
+United Kingdom of Great Britain and Northern Ireland,GBR,ENW,UK,48.0,OMNIA INF_Data,35.7,True,United Kingdom,,,-12.299999999999997,12.299999999999997,-25.624999999999993,Review: relative threshold exceeded,False,False,25.0,50.0
+Greece,GRC,EUM,Europe,180.0,OMNIA INF_Data,189.036,True,Greece,,,9.036000000000001,9.036000000000001,5.0200000000000005,Within thresholds,False,False,25.0,50.0
+Romania,ROU,EUE,Europe,280.0,OMNIA INF_Data,271.307,True,Romania,,,-8.692999999999984,8.692999999999984,-3.1046428571428515,Within thresholds,False,False,25.0,50.0
+Cameroon,CMR,AFW,Other main producer,70.0,OMNIA INF_Data,61.7,True,Cameroon,,,-8.299999999999997,8.299999999999997,-11.857142857142854,Within thresholds,False,False,25.0,50.0
+Saudi Arabia,SAU,MEA,Middle East,790.0,OMNIA INF_Data,796.004,True,Saudi Arabia,,,6.004000000000019,6.004000000000019,0.7600000000000025,Within thresholds,False,False,25.0,50.0
+Oman,OMN,MEA,Middle East,391.0,OMNIA INF_Data,397.0,True,Oman,,,6.0,6.0,1.5345268542199488,Within thresholds,False,False,25.0,50.0
+Kazakhstan,KAZ,ASC,Other main producer,260.0,OMNIA INF_Data,264.6,True,Kazakhstan,,,4.600000000000023,4.600000000000023,1.769230769230778,Within thresholds,False,False,25.0,50.0
+Ghana,GHA,AFW,Rest of World,42.0,OMNIA INF_Data,37.566,True,Ghana,,Exports,-4.4339999999999975,4.4339999999999975,-10.557142857142852,Within thresholds,False,False,25.0,50.0
+Mozambique,MOZ,AFZ,Rest of World,565.0,OMNIA INF_Data,569.002,True,Mozambique,,Years ended 30 June of the stated year,4.001999999999953,4.001999999999953,0.7083185840707881,Within thresholds,False,False,25.0,50.0
+Sweden,SWE,EUW,Europe,120.0,OMNIA INF_Data,117.0,True,Sweden,,,-3.0,3.0,-2.5,Within thresholds,False,False,25.0,50.0
+Venezuela (Bolivarian Republic of),VEN,LAM,South America,8.0,OMNIA INF_Data,10.0,True,Venezuela,2020;2023;2024,,2.0,2.0,25.0,Review: relative threshold exceeded,False,True,25.0,50.0
+Turkey,TUR,MDA,Europe,80.0,OMNIA INF_Data,79.9,True,Turkey,2023;2024,,-0.09999999999999432,0.09999999999999432,-0.1249999999999929,Within thresholds,False,False,25.0,50.0
+South Africa,ZAF,AFZ,Other main producer,717.0,OMNIA INF_Data,717.0,True,South Africa,,,0.0,0.0,0.0,Within thresholds,False,False,25.0,50.0
