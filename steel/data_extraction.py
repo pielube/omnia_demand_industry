@@ -8,9 +8,10 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 INPUTS_DIR = BASE_DIR / "inputs"
 OUTPUTS_DIR = BASE_DIR / "outputs"
+SHARED_INPUTS_DIR = BASE_DIR.parent / "shared_inputs"
 
 enduse_path = INPUTS_DIR / "endusedemand.xlsx"
-pop_path = INPUTS_DIR / "undesa_pop.xlsx"
+pop_path = SHARED_INPUTS_DIR / "undesa_pop.xlsx"
 total_scrap_path = INPUTS_DIR / "total_scrap.xlsx"
 
 # Final output file: generated directly, with all data included

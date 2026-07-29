@@ -27,10 +27,8 @@ TABLES = {
         # their sum matches the workbook's global production value in Mt.
         "output_scale": 1000.0,
         "global_scale": 1000.0,
-        "projection_csv": OUTPUTS_DIR
-        / "steel_production_omnia_region_projection_2019_2050.csv",
-        "growth_csv": OUTPUTS_DIR
-        / "steel_production_omnia_region_growth_2019_2050.csv",
+        "projection_csv": OUTPUTS_DIR / "steel_production_omnia.csv",
+        "growth_csv": OUTPUTS_DIR / "steel_production_omnia_growth_rates.csv",
     },
     "scrap": {
         "header_row": 167,
@@ -41,10 +39,8 @@ TABLES = {
         "output_scale": 1.0,
         # Regional scrap values are kt and the global workbook row is Mt.
         "global_scale": 1000.0,
-        "projection_csv": OUTPUTS_DIR
-        / "steel_scrap_omnia_region_projection_2019_2050.csv",
-        "growth_csv": OUTPUTS_DIR
-        / "steel_scrap_omnia_region_growth_2019_2050.csv",
+        "projection_csv": OUTPUTS_DIR / "steel_scrap_omnia.csv",
+        "growth_csv": OUTPUTS_DIR / "steel_scrap_omnia_growth_rates.csv",
     },
 }
 
@@ -116,7 +112,7 @@ def extract_table(worksheet, name: str, config: dict) -> pd.DataFrame:
 
 
 def calculate_growth(projection: pd.DataFrame) -> pd.DataFrame:
-    """Calculate percentage change from 2019 in the aluminium output format."""
+    """Calculate each OMNIA region's percentage change from 2019."""
     years = [str(year) for year in range(BASE_YEAR, END_YEAR + 1)]
     growth = projection.copy()
     base_values = projection[str(BASE_YEAR)]

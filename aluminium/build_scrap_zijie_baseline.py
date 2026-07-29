@@ -6,18 +6,16 @@ import pandas as pd
 BASE_DIR = Path(__file__).resolve().parent
 INPUTS_DIR = BASE_DIR / "inputs"
 MAPS_DIR = BASE_DIR / "maps"
-OUTPUTS_DIR = BASE_DIR / "outputs"
+SHARED_INPUTS_DIR = BASE_DIR.parent / "shared_inputs"
 
-OMNIA_MAPPING_PATH = MAPS_DIR / "OMNIA_region_mapping_241120.csv"
+OMNIA_MAPPING_PATH = SHARED_INPUTS_DIR / "OMNIA_region_mapping_241120.csv"
 SECONDARY_PRODUCER_MAP_PATH = MAPS_DIR / "aluminium_secondary_producers_zijie_region_map.csv"
 PRIMARY_PRODUCER_MAP_PATH = MAPS_DIR / "aluminium_primary_producers_zijie_region_map.csv"
 ZIJIE_SCENARIO_PATH = INPUTS_DIR / "10 regions Al data.xlsx"
 
-OUTPUT_CSV = OUTPUTS_DIR / "aluminium_secondary_country_projection_2019_2050.csv"
-
 SCENARIO_SHEET = "baseline"
-SCENARIO_LABEL = "Secondary Al ingot (kt)"
-METRIC = "Secondary aluminium ingot production"
+SCENARIO_LABEL = "Al scrap (kt)"
+METRIC = "Aluminium scrap"
 UNIT = "kt"
 
 BASE_YEAR = 2019
@@ -40,7 +38,7 @@ ZIJIE_REGIONS = [
 ]
 
 
-def read_zijie_secondary_scenario():
+def read_zijie_scrap_scenario():
     raw = pd.read_excel(ZIJIE_SCENARIO_PATH, sheet_name=SCENARIO_SHEET, header=None)
     matches = raw.iloc[0].eq(SCENARIO_LABEL)
     if matches.sum() != 1:
@@ -81,7 +79,7 @@ def extrapolate_base_year_from_zijie(scenario, region):
     return max(0.0, extrapolated)
 
 
-def make_proxy_weights_from_primary(scenario, missing_regions):
+def make_proxy_weights_from_primary(missing_regions):
     primary_map = pd.read_csv(PRIMARY_PRODUCER_MAP_PATH)
     required_columns = {"ISO3", "ZijieRegion", "PrimaryProduction2019_kt"}
     missing = required_columns - set(primary_map.columns)
@@ -94,27 +92,15 @@ def make_proxy_weights_from_primary(scenario, missing_regions):
         errors="coerce",
     ).fillna(0)
     proxy = proxy[proxy["PrimaryProduction2019_kt"] > 0].copy()
-
-    frames = []
-    for region, region_rows in proxy.groupby("ZijieRegion"):
-        primary_total = region_rows["PrimaryProduction2019_kt"].sum()
-        secondary_total = extrapolate_base_year_from_zijie(scenario, region)
-        region_rows = region_rows.copy()
-        region_rows["SecondaryProduction2019_kt"] = (
-            region_rows["PrimaryProduction2019_kt"] / primary_total * secondary_total
-        )
-        region_rows["AllocationMethod"] = (
-            f"Primary producer share proxy; no explicit 2019 secondary producer map for {region}"
-        )
-        frames.append(region_rows[["ISO3", "ZijieRegion", "SecondaryProduction2019_kt", "AllocationMethod"]])
-
-    if not frames:
-        return pd.DataFrame(columns=["ISO3", "ZijieRegion", "SecondaryProduction2019_kt", "AllocationMethod"])
-
-    return pd.concat(frames, ignore_index=True)
+    proxy = proxy.rename(columns={"PrimaryProduction2019_kt": "ShareWeight"})
+    proxy["AllocationMethod"] = (
+        "Secondary-share fallback from primary producer shares; "
+        "no explicit 2019 secondary producer map for region"
+    )
+    return proxy[["ISO3", "ZijieRegion", "ShareWeight", "AllocationMethod"]]
 
 
-def make_allocation_weights(scenario):
+def make_secondary_shares():
     producer_map = pd.read_csv(SECONDARY_PRODUCER_MAP_PATH)
     required_columns = {"ISO3", "ZijieRegion", "SecondaryProduction2019_kt"}
     missing = required_columns - set(producer_map.columns)
@@ -127,22 +113,17 @@ def make_allocation_weights(scenario):
         errors="coerce",
     ).fillna(0)
     weights = weights[weights["SecondaryProduction2019_kt"] > 0].copy()
-    weights["AllocationMethod"] = "2019 secondary producer share from INF_Data"
+    weights = weights.rename(columns={"SecondaryProduction2019_kt": "ShareWeight"})
+    weights["AllocationMethod"] = "Scrap allocated using 2019 secondary producer share from INF_Data"
 
     missing_regions = sorted(set(ZIJIE_REGIONS) - set(weights["ZijieRegion"]))
     if missing_regions:
-        proxy_weights = make_proxy_weights_from_primary(scenario, missing_regions)
+        proxy_weights = make_proxy_weights_from_primary(missing_regions)
         weights = pd.concat([weights, proxy_weights], ignore_index=True)
 
-    region_weight_totals = (
-        weights
-        .groupby("ZijieRegion")["SecondaryProduction2019_kt"]
-        .sum()
-        .to_dict()
-    )
-
+    region_weight_totals = weights.groupby("ZijieRegion")["ShareWeight"].sum().to_dict()
     weights["RegionShare"] = weights.apply(
-        lambda row: row["SecondaryProduction2019_kt"] / region_weight_totals[row["ZijieRegion"]],
+        lambda row: row["ShareWeight"] / region_weight_totals[row["ZijieRegion"]],
         axis=1,
     )
 
@@ -150,33 +131,35 @@ def make_allocation_weights(scenario):
     if still_missing:
         raise ValueError(f"No allocation weights for Zijie regions: {still_missing}")
 
-    return weights[
-        ["ISO3", "ZijieRegion", "SecondaryProduction2019_kt", "RegionShare", "AllocationMethod"]
-    ]
+    return weights[["ISO3", "ZijieRegion", "ShareWeight", "RegionShare", "AllocationMethod"]]
 
 
 def build_projection():
     countries = make_country_frame()
-    scenario = read_zijie_secondary_scenario()
-    weights = make_allocation_weights(scenario)
+    scenario = read_zijie_scrap_scenario()
+    weights = make_secondary_shares()
 
     output = countries.merge(
         weights,
         on=["ISO3", "ZijieRegion"],
         how="left",
     )
-    output["SecondaryProduction2019_kt"] = output["SecondaryProduction2019_kt"].fillna(0)
+    output["ShareWeight"] = output["ShareWeight"].fillna(0)
     output["RegionShare"] = output["RegionShare"].fillna(0)
     output["AllocationMethod"] = output["AllocationMethod"].fillna(
-        "No 2019 secondary producer share; assigned zero"
+        "No secondary producer share; assigned zero"
     )
 
     for year in YEARS:
         output[year] = 0.0
 
-    output[BASE_YEAR] = output["SecondaryProduction2019_kt"]
-
     scenario_by_year = scenario.set_index("Year")
+
+    for region in ZIJIE_REGIONS:
+        base_total = extrapolate_base_year_from_zijie(scenario, region)
+        mask = output["ZijieRegion"].eq(region)
+        output.loc[mask, BASE_YEAR] = output.loc[mask, "RegionShare"] * base_total
+
     for year in ZIJIE_YEARS:
         output[year] = output.apply(
             lambda row: scenario_by_year.at[year, row["ZijieRegion"]] * row["RegionShare"],
@@ -187,6 +170,8 @@ def build_projection():
         fraction = (year - BASE_YEAR) / (FIRST_ZIJIE_YEAR - BASE_YEAR)
         output[year] = output[BASE_YEAR] + (output[FIRST_ZIJIE_YEAR] - output[BASE_YEAR]) * fraction
 
+    output["Scrap2019_kt"] = output[BASE_YEAR]
+
     output = output[
         [
             "Country",
@@ -196,7 +181,8 @@ def build_projection():
             "ZijieRegion",
             "Metric",
             "Unit",
-            "SecondaryProduction2019_kt",
+            "Scrap2019_kt",
+            "ShareWeight",
             "RegionShare",
             "AllocationMethod",
         ] + YEARS
@@ -240,30 +226,3 @@ def make_total_checks(output, scenario):
     if max_difference > 1e-6:
         raise ValueError(f"Allocated totals do not match Zijie totals. Max diff: {max_difference}")
     return checks
-
-
-def main():
-    output, scenario = build_projection()
-    checks = make_total_checks(output, scenario)
-
-    OUTPUTS_DIR.mkdir(exist_ok=True)
-    output.to_csv(OUTPUT_CSV, index=False)
-
-    print(f"Saved: {OUTPUT_CSV}")
-    print(f"Rows: {len(output)}")
-    print(f"Years included: {BASE_YEAR}-{END_YEAR}")
-    print(f"Max total difference, kt: {checks['Difference_kt'].abs().max():.3e}")
-    print("Proxy regions:")
-    print(
-        output.loc[
-            output["AllocationMethod"].str.startswith("Primary producer share proxy"),
-            "ZijieRegion",
-        ]
-        .drop_duplicates()
-        .sort_values()
-        .to_string(index=False)
-    )
-
-
-if __name__ == "__main__":
-    main()

@@ -1,22 +1,34 @@
+from io import StringIO
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+from aluminium_projection_utils import (
+    aggregate_to_omnia_regions,
+    calculate_growth_rates,
+)
+from build_primary_zijie_baseline import (
+    build_projection as build_zijie_projection,
+    make_total_checks as validate_zijie_projection,
+)
 
 
 BASE_DIR = Path(__file__).resolve().parent
 INPUTS_DIR = BASE_DIR / "inputs"
 OUTPUTS_DIR = BASE_DIR / "outputs"
 
-OLD_PROJECTION_PATH = OUTPUTS_DIR / "aluminium_primary_country_projection_2019_2050.csv"
 BGS_HISTORY_PATH = INPUTS_DIR / "bgs_primary_aluminium_2020_2024.csv"
 ZIJIE_SCENARIO_PATH = INPUTS_DIR / "10 regions Al data.xlsx"
 
 OUTPUT_CSV = (
-    OUTPUTS_DIR / "aluminium_primary_country_projection_bgs_aligned_2019_2050.csv"
+    OUTPUTS_DIR / "aluminium_primary_country.csv"
 )
-MISALIGNMENT_CSV = (
-    OUTPUTS_DIR / "aluminium_primary_bgs_vs_omnia_2019_misalignment.csv"
+OMNIA_OUTPUT_CSV = (
+    OUTPUTS_DIR / "aluminium_primary_omnia.csv"
+)
+OMNIA_GROWTH_OUTPUT_CSV = (
+    OUTPUTS_DIR / "aluminium_primary_omnia_growth_rates.csv"
 )
 
 SCENARIO_SHEET = "baseline"
@@ -69,7 +81,9 @@ BGS_WORLD_TOTAL_ROUNDING_TOLERANCE_KT = 50.0
 
 
 def read_old_projection():
-    old = pd.read_csv(OLD_PROJECTION_PATH)
+    old, scenario = build_zijie_projection()
+    validate_zijie_projection(old, scenario)
+    old = pd.read_csv(StringIO(old.to_csv(index=False)))
     required = {
         "Country",
         "ISO2",
@@ -367,11 +381,17 @@ def main():
 
     OUTPUTS_DIR.mkdir(exist_ok=True)
     output.to_csv(OUTPUT_CSV, index=False)
-    report.to_csv(MISALIGNMENT_CSV, index=False)
+    omnia_output = aggregate_to_omnia_regions(pd.read_csv(OUTPUT_CSV))
+    omnia_output.to_csv(OMNIA_OUTPUT_CSV, index=False)
+    calculate_growth_rates(omnia_output).to_csv(
+        OMNIA_GROWTH_OUTPUT_CSV,
+        index=False,
+    )
 
     major = report[report["MajorMisalignment"]]
     print(f"Saved: {OUTPUT_CSV}")
-    print(f"Saved: {MISALIGNMENT_CSV}")
+    print(f"Saved: {OMNIA_OUTPUT_CSV}")
+    print(f"Saved: {OMNIA_GROWTH_OUTPUT_CSV}")
     print(f"Rows: {len(output)}")
     print(f"BGS producer records: {len(bgs)}")
     print(f"Major OMNIA 2019 vs BGS 2020 misalignments: {len(major)}")

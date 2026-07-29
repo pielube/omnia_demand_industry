@@ -5,8 +5,9 @@ import pandas as pd
 
 BASE_DIR = Path(__file__).resolve().parent
 MAPS_DIR = BASE_DIR / "maps"
+SHARED_INPUTS_DIR = BASE_DIR.parent / "shared_inputs"
 
-INPUT_PATH = MAPS_DIR / "OMNIA_region_mapping_241120.csv"
+INPUT_PATH = SHARED_INPUTS_DIR / "OMNIA_region_mapping_241120.csv"
 SUMMARY_PATH = MAPS_DIR / "zijie_region_mapping_summary.csv"
 
 

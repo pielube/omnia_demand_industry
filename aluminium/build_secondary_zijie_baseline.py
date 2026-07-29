@@ -6,17 +6,16 @@ import pandas as pd
 BASE_DIR = Path(__file__).resolve().parent
 INPUTS_DIR = BASE_DIR / "inputs"
 MAPS_DIR = BASE_DIR / "maps"
-OUTPUTS_DIR = BASE_DIR / "outputs"
+SHARED_INPUTS_DIR = BASE_DIR.parent / "shared_inputs"
 
-OMNIA_MAPPING_PATH = MAPS_DIR / "OMNIA_region_mapping_241120.csv"
+OMNIA_MAPPING_PATH = SHARED_INPUTS_DIR / "OMNIA_region_mapping_241120.csv"
+SECONDARY_PRODUCER_MAP_PATH = MAPS_DIR / "aluminium_secondary_producers_zijie_region_map.csv"
 PRIMARY_PRODUCER_MAP_PATH = MAPS_DIR / "aluminium_primary_producers_zijie_region_map.csv"
 ZIJIE_SCENARIO_PATH = INPUTS_DIR / "10 regions Al data.xlsx"
 
-OUTPUT_CSV = OUTPUTS_DIR / "aluminium_primary_country_projection_2019_2050.csv"
-
 SCENARIO_SHEET = "baseline"
-SCENARIO_LABEL = "Primary Al ingot (kt)"
-METRIC = "Primary aluminium ingot production"
+SCENARIO_LABEL = "Secondary Al ingot (kt)"
+METRIC = "Secondary aluminium ingot production"
 UNIT = "kt"
 
 BASE_YEAR = 2019
@@ -39,7 +38,7 @@ ZIJIE_REGIONS = [
 ]
 
 
-def read_zijie_primary_scenario():
+def read_zijie_secondary_scenario():
     raw = pd.read_excel(ZIJIE_SCENARIO_PATH, sheet_name=SCENARIO_SHEET, header=None)
     matches = raw.iloc[0].eq(SCENARIO_LABEL)
     if matches.sum() != 1:
@@ -80,92 +79,100 @@ def extrapolate_base_year_from_zijie(scenario, region):
     return max(0.0, extrapolated)
 
 
-def make_allocation_weights(countries, scenario):
-    producer_map = pd.read_csv(PRIMARY_PRODUCER_MAP_PATH)
+def make_proxy_weights_from_primary(scenario, missing_regions):
+    primary_map = pd.read_csv(PRIMARY_PRODUCER_MAP_PATH)
     required_columns = {"ISO3", "ZijieRegion", "PrimaryProduction2019_kt"}
-    missing = required_columns - set(producer_map.columns)
+    missing = required_columns - set(primary_map.columns)
     if missing:
         raise ValueError(f"Primary producer map is missing columns: {sorted(missing)}")
 
-    weights = producer_map[["ISO3", "ZijieRegion", "PrimaryProduction2019_kt"]].copy()
-    weights["PrimaryProduction2019_kt"] = pd.to_numeric(
-        weights["PrimaryProduction2019_kt"],
+    proxy = primary_map[primary_map["ZijieRegion"].isin(missing_regions)].copy()
+    proxy["PrimaryProduction2019_kt"] = pd.to_numeric(
+        proxy["PrimaryProduction2019_kt"],
         errors="coerce",
     ).fillna(0)
-    weights = weights[weights["PrimaryProduction2019_kt"] > 0].copy()
-    weights["AllocationMethod"] = "2019 primary producer share from INF_Data"
+    proxy = proxy[proxy["PrimaryProduction2019_kt"] > 0].copy()
 
-    # Zijie has a Japan primary-ingot trajectory, but the INF_Data primary
-    # country table has no Japan primary value. Back-extrapolate Japan's 2019
-    # value from Zijie's 2024-2030 trend, then allocate the single-country
-    # region to Japan.
-    if "Japan" not in set(weights["ZijieRegion"]):
-        japan = countries[countries["ISO3"].eq("JPN")].head(1)
-        if japan.empty:
-            raise ValueError("Cannot add Japan fallback because JPN is missing from OMNIA mapping.")
-        japan_2019 = extrapolate_base_year_from_zijie(scenario, "Japan")
-        weights = pd.concat(
-            [
-                weights,
-                pd.DataFrame(
-                    [
-                        {
-                            "ISO3": "JPN",
-                            "ZijieRegion": "Japan",
-                            "PrimaryProduction2019_kt": japan_2019,
-                            "AllocationMethod": (
-                                "Single-country Japan fallback; 2019 back-extrapolated from Zijie 2024-2030 trend"
-                            ),
-                        }
-                    ]
-                ),
-            ],
-            ignore_index=True,
+    frames = []
+    for region, region_rows in proxy.groupby("ZijieRegion"):
+        primary_total = region_rows["PrimaryProduction2019_kt"].sum()
+        secondary_total = extrapolate_base_year_from_zijie(scenario, region)
+        region_rows = region_rows.copy()
+        region_rows["SecondaryProduction2019_kt"] = (
+            region_rows["PrimaryProduction2019_kt"] / primary_total * secondary_total
         )
+        region_rows["AllocationMethod"] = (
+            f"Primary producer share proxy; no explicit 2019 secondary producer map for {region}"
+        )
+        frames.append(region_rows[["ISO3", "ZijieRegion", "SecondaryProduction2019_kt", "AllocationMethod"]])
+
+    if not frames:
+        return pd.DataFrame(columns=["ISO3", "ZijieRegion", "SecondaryProduction2019_kt", "AllocationMethod"])
+
+    return pd.concat(frames, ignore_index=True)
+
+
+def make_allocation_weights(scenario):
+    producer_map = pd.read_csv(SECONDARY_PRODUCER_MAP_PATH)
+    required_columns = {"ISO3", "ZijieRegion", "SecondaryProduction2019_kt"}
+    missing = required_columns - set(producer_map.columns)
+    if missing:
+        raise ValueError(f"Secondary producer map is missing columns: {sorted(missing)}")
+
+    weights = producer_map[["ISO3", "ZijieRegion", "SecondaryProduction2019_kt"]].copy()
+    weights["SecondaryProduction2019_kt"] = pd.to_numeric(
+        weights["SecondaryProduction2019_kt"],
+        errors="coerce",
+    ).fillna(0)
+    weights = weights[weights["SecondaryProduction2019_kt"] > 0].copy()
+    weights["AllocationMethod"] = "2019 secondary producer share from INF_Data"
+
+    missing_regions = sorted(set(ZIJIE_REGIONS) - set(weights["ZijieRegion"]))
+    if missing_regions:
+        proxy_weights = make_proxy_weights_from_primary(scenario, missing_regions)
+        weights = pd.concat([weights, proxy_weights], ignore_index=True)
 
     region_weight_totals = (
         weights
-        .groupby("ZijieRegion")["PrimaryProduction2019_kt"]
+        .groupby("ZijieRegion")["SecondaryProduction2019_kt"]
         .sum()
         .to_dict()
     )
 
     weights["RegionShare"] = weights.apply(
-        lambda row: (
-            1.0
-            if row["ZijieRegion"] == "Japan"
-            else row["PrimaryProduction2019_kt"] / region_weight_totals[row["ZijieRegion"]]
-        ),
+        lambda row: row["SecondaryProduction2019_kt"] / region_weight_totals[row["ZijieRegion"]],
         axis=1,
     )
 
-    missing_regions = sorted(set(ZIJIE_REGIONS) - set(weights["ZijieRegion"]))
-    if missing_regions:
-        raise ValueError(f"No allocation weights for Zijie regions: {missing_regions}")
+    still_missing = sorted(set(ZIJIE_REGIONS) - set(weights["ZijieRegion"]))
+    if still_missing:
+        raise ValueError(f"No allocation weights for Zijie regions: {still_missing}")
 
-    return weights[["ISO3", "ZijieRegion", "PrimaryProduction2019_kt", "RegionShare", "AllocationMethod"]]
+    return weights[
+        ["ISO3", "ZijieRegion", "SecondaryProduction2019_kt", "RegionShare", "AllocationMethod"]
+    ]
 
 
 def build_projection():
     countries = make_country_frame()
-    scenario = read_zijie_primary_scenario()
-    weights = make_allocation_weights(countries, scenario)
+    scenario = read_zijie_secondary_scenario()
+    weights = make_allocation_weights(scenario)
 
     output = countries.merge(
         weights,
         on=["ISO3", "ZijieRegion"],
         how="left",
     )
-    output["PrimaryProduction2019_kt"] = output["PrimaryProduction2019_kt"].fillna(0)
+    output["SecondaryProduction2019_kt"] = output["SecondaryProduction2019_kt"].fillna(0)
     output["RegionShare"] = output["RegionShare"].fillna(0)
     output["AllocationMethod"] = output["AllocationMethod"].fillna(
-        "No 2019 primary producer share; assigned zero"
+        "No 2019 secondary producer share; assigned zero"
     )
 
     for year in YEARS:
         output[year] = 0.0
 
-    output[BASE_YEAR] = output["PrimaryProduction2019_kt"]
+    output[BASE_YEAR] = output["SecondaryProduction2019_kt"]
 
     scenario_by_year = scenario.set_index("Year")
     for year in ZIJIE_YEARS:
@@ -187,7 +194,7 @@ def build_projection():
             "ZijieRegion",
             "Metric",
             "Unit",
-            "PrimaryProduction2019_kt",
+            "SecondaryProduction2019_kt",
             "RegionShare",
             "AllocationMethod",
         ] + YEARS
@@ -231,20 +238,3 @@ def make_total_checks(output, scenario):
     if max_difference > 1e-6:
         raise ValueError(f"Allocated totals do not match Zijie totals. Max diff: {max_difference}")
     return checks
-
-
-def main():
-    output, scenario = build_projection()
-    checks = make_total_checks(output, scenario)
-
-    OUTPUTS_DIR.mkdir(exist_ok=True)
-    output.to_csv(OUTPUT_CSV, index=False)
-
-    print(f"Saved: {OUTPUT_CSV}")
-    print(f"Rows: {len(output)}")
-    print(f"Years included: {BASE_YEAR}-{END_YEAR}")
-    print(f"Max total difference, kt: {checks['Difference_kt'].abs().max():.3e}")
-
-
-if __name__ == "__main__":
-    main()

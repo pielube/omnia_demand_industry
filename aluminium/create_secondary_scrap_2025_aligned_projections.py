@@ -1,9 +1,21 @@
+from io import StringIO
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from create_primary_omnia_region_projection import generate_outputs
+from aluminium_projection_utils import (
+    aggregate_to_omnia_regions,
+    calculate_growth_rates,
+)
+from build_scrap_zijie_baseline import (
+    build_projection as build_scrap_baseline,
+    make_total_checks as validate_scrap_baseline,
+)
+from build_secondary_zijie_baseline import (
+    build_projection as build_secondary_baseline,
+    make_total_checks as validate_secondary_baseline,
+)
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -44,40 +56,31 @@ CONFIGS = [
     {
         "name": "secondary",
         "scenario_label": "Secondary Al ingot (kt)",
-        "old_country": (
-            OUTPUTS_DIR
-            / "aluminium_secondary_country_projection_2019_2050.csv"
-        ),
+        "baseline_builder": build_secondary_baseline,
+        "baseline_validator": validate_secondary_baseline,
         "aligned_country": (
-            OUTPUTS_DIR
-            / "aluminium_secondary_country_projection_2025_aligned_2019_2050.csv"
+            OUTPUTS_DIR / "aluminium_secondary_country.csv"
         ),
         "omnia_totals": (
-            OUTPUTS_DIR
-            / "aluminium_secondary_2025_aligned_omnia_region_projection_2019_2050.csv"
+            OUTPUTS_DIR / "aluminium_secondary_omnia.csv"
         ),
         "omnia_growth": (
-            OUTPUTS_DIR
-            / "aluminium_secondary_2025_aligned_omnia_region_growth_2019_2050.csv"
+            OUTPUTS_DIR / "aluminium_secondary_omnia_growth_rates.csv"
         ),
     },
     {
         "name": "scrap",
         "scenario_label": "Al scrap (kt)",
-        "old_country": (
-            OUTPUTS_DIR / "aluminium_scrap_country_projection_2019_2050.csv"
-        ),
+        "baseline_builder": build_scrap_baseline,
+        "baseline_validator": validate_scrap_baseline,
         "aligned_country": (
-            OUTPUTS_DIR
-            / "aluminium_scrap_country_projection_2025_aligned_2019_2050.csv"
+            OUTPUTS_DIR / "aluminium_scrap_country.csv"
         ),
         "omnia_totals": (
-            OUTPUTS_DIR
-            / "aluminium_scrap_2025_aligned_omnia_region_projection_2019_2050.csv"
+            OUTPUTS_DIR / "aluminium_scrap_omnia.csv"
         ),
         "omnia_growth": (
-            OUTPUTS_DIR
-            / "aluminium_scrap_2025_aligned_omnia_region_growth_2019_2050.csv"
+            OUTPUTS_DIR / "aluminium_scrap_omnia_growth_rates.csv"
         ),
     },
 ]
@@ -109,7 +112,9 @@ def read_zijie_scenario(label):
 
 
 def build_aligned_projection(config):
-    old = pd.read_csv(config["old_country"])
+    old, baseline_scenario = config["baseline_builder"]()
+    config["baseline_validator"](old, baseline_scenario)
+    old = pd.read_csv(StringIO(old.to_csv(index=False)))
     required = {"ISO3", "ZijieRegion", *[str(year) for year in YEARS]}
     missing = required - set(old.columns)
     if missing:
@@ -223,13 +228,18 @@ def main():
     for config in CONFIGS:
         old, aligned = build_aligned_projection(config)
         aligned.to_csv(config["aligned_country"], index=False)
-        generate_outputs(
-            config["aligned_country"],
-            config["omnia_totals"],
+        omnia_output = aggregate_to_omnia_regions(
+            pd.read_csv(config["aligned_country"])
+        )
+        omnia_output.to_csv(config["omnia_totals"], index=False)
+        calculate_growth_rates(omnia_output).to_csv(
             config["omnia_growth"],
+            index=False,
         )
 
         print(f"Saved: {config['aligned_country']}")
+        print(f"Saved: {config['omnia_totals']}")
+        print(f"Saved: {config['omnia_growth']}")
         print(
             f"{config['name'].title()} global 2025, old/aligned kt: "
             f"{old[str(ALIGNMENT_YEAR)].sum():.3f} / "

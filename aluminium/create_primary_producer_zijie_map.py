@@ -6,9 +6,10 @@ import pandas as pd
 BASE_DIR = Path(__file__).resolve().parent
 INPUTS_DIR = BASE_DIR / "inputs"
 MAPS_DIR = BASE_DIR / "maps"
+SHARED_INPUTS_DIR = BASE_DIR.parent / "shared_inputs"
 
-INF_WORKBOOK_PATH = INPUTS_DIR / "VT_OMNIA_IIS_INM_INF_v0.4.xlsx"
-OMNIA_MAPPING_PATH = MAPS_DIR / "OMNIA_region_mapping_241120.csv"
+INF_WORKBOOK_PATH = SHARED_INPUTS_DIR / "VT_OMNIA_IIS_INM_INF_v0.4.xlsx"
+OMNIA_MAPPING_PATH = SHARED_INPUTS_DIR / "OMNIA_region_mapping_241120.csv"
 OUTPUT_CSV = MAPS_DIR / "aluminium_primary_producers_zijie_region_map.csv"
 
 

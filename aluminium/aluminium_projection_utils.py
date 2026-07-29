@@ -4,22 +4,18 @@ import pandas as pd
 
 
 BASE_DIR = Path(__file__).resolve().parent
-MAPS_DIR = BASE_DIR / "maps"
-OUTPUTS_DIR = BASE_DIR / "outputs"
+SHARED_INPUTS_DIR = BASE_DIR.parent / "shared_inputs"
 
-INPUT_CSV = OUTPUTS_DIR / "aluminium_primary_country_projection_2019_2050.csv"
-OMNIA_MAPPING_CSV = MAPS_DIR / "OMNIA_region_mapping_241120.csv"
-
-TOTALS_CSV = OUTPUTS_DIR / "aluminium_primary_omnia_region_projection_2019_2050.csv"
-GROWTH_CSV = OUTPUTS_DIR / "aluminium_primary_omnia_region_growth_2019_2050.csv"
+OMNIA_MAPPING_CSV = SHARED_INPUTS_DIR / "OMNIA_region_mapping_241120.csv"
 
 BASE_YEAR = 2019
 END_YEAR = 2050
 YEARS = [str(year) for year in range(BASE_YEAR, END_YEAR + 1)]
 
 
-def read_inputs(input_csv=INPUT_CSV):
-    projection = pd.read_csv(input_csv)
+def add_omnia_regions(projection):
+    projection = projection.copy()
+    projection.columns = projection.columns.map(str)
     mapping = pd.read_csv(OMNIA_MAPPING_CSV)
 
     projection_required = {"ISO3", *YEARS}
@@ -75,7 +71,8 @@ def read_inputs(input_csv=INPUT_CSV):
     return projection
 
 
-def build_outputs(projection):
+def aggregate_to_omnia_regions(projection):
+    projection = add_omnia_regions(projection)
     totals = (
         projection.groupby("OMNIARegionFromMapping", as_index=False)[YEARS]
         .sum()
@@ -93,46 +90,31 @@ def build_outputs(projection):
             f"Max difference: {max_difference}"
         )
 
-    growth = totals.copy()
-    base_values = totals[str(BASE_YEAR)]
+    return totals
+
+
+def calculate_growth_rates(projection):
+    """Calculate percentage growth from the 2019 base year."""
+    growth = projection.copy()
+    growth[YEARS] = growth[YEARS].apply(pd.to_numeric, errors="raise")
+    base_values = growth[str(BASE_YEAR)]
     zero_base = base_values.eq(0)
 
-    nonzero_future = totals.loc[zero_base, YEARS].ne(0).any(axis=1)
+    nonzero_future = growth.loc[zero_base, YEARS].ne(0).any(axis=1)
     if nonzero_future.any():
-        regions = totals.loc[zero_base & nonzero_future, "OMNIARegion"].tolist()
+        regions = growth.loc[
+            zero_base & nonzero_future, "OMNIARegion"
+        ].tolist()
         raise ValueError(
-            "Cannot calculate base-year growth for zero-base regions with nonzero "
+            "Cannot calculate growth for zero-base regions with nonzero "
             f"future values: {regions}"
         )
 
     growth.loc[~zero_base, YEARS] = (
-        totals.loc[~zero_base, YEARS]
+        growth.loc[~zero_base, YEARS]
         .div(base_values.loc[~zero_base], axis=0)
         .sub(1)
         .mul(100)
     )
     growth.loc[zero_base, YEARS] = 0.0
-
-    return totals, growth, max_difference
-
-
-def generate_outputs(input_csv, totals_csv, growth_csv):
-    projection = read_inputs(input_csv)
-    totals, growth, max_difference = build_outputs(projection)
-
-    totals.to_csv(totals_csv, index=False)
-    growth.to_csv(growth_csv, index=False)
-
-    print(f"Saved: {totals_csv}")
-    print(f"Saved: {growth_csv}")
-    print(f"OMNIA regions: {len(totals)}")
-    print(f"Years included: {BASE_YEAR}-{END_YEAR}")
-    print(f"Max aggregation difference, kt: {max_difference:.3e}")
-
-
-def main():
-    generate_outputs(INPUT_CSV, TOTALS_CSV, GROWTH_CSV)
-
-
-if __name__ == "__main__":
-    main()
+    return growth
