@@ -42,6 +42,7 @@ END_YEAR = 2050
 
 YEARS = list(range(BASE_YEAR, END_YEAR + 1))
 BGS_YEARS = list(range(FIRST_BGS_YEAR, LAST_BGS_YEAR + 1))
+ZIJIE_YEARS = list(range(LAST_BGS_YEAR, END_YEAR + 1))
 PROJECTION_YEARS = list(range(FIRST_PROJECTION_YEAR, END_YEAR + 1))
 
 ZIJIE_REGIONS = [
@@ -67,8 +68,9 @@ BGS_SOURCE = (
     "Production of primary aluminium"
 )
 PROJECTION_METHOD = (
-    "BGS 2024 country value held to 2025; Zijie regional growth indexed "
-    "to 2025 thereafter"
+    "BGS 2024 country value rebased to a synthetic Zijie 2024 regional value "
+    "linearly back-extrapolated from Zijie 2025-2026; Zijie regional trajectory "
+    "applied from 2025 onward"
 )
 BGS_PUBLISHED_WORLD_TOTAL_KT = {
     2020: 65_400,
@@ -153,16 +155,37 @@ def read_zijie_scenario():
         start_col : start_col + 1 + len(ZIJIE_REGIONS),
     ].copy()
     scenario.columns = ["Year"] + ZIJIE_REGIONS
-    scenario = scenario[scenario["Year"].isin(PROJECTION_YEARS)].copy()
+    scenario = scenario[scenario["Year"].isin(ZIJIE_YEARS)].copy()
     scenario["Year"] = scenario["Year"].astype(int)
     scenario[ZIJIE_REGIONS] = scenario[ZIJIE_REGIONS].apply(
         pd.to_numeric,
         errors="raise",
     )
 
-    missing_years = sorted(set(PROJECTION_YEARS) - set(scenario["Year"]))
+    missing_years = sorted(set(ZIJIE_YEARS) - set(scenario["Year"]))
     if missing_years:
         raise ValueError(f"Zijie scenario is missing years: {missing_years}")
+
+    scenario = scenario.sort_values("Year").reset_index(drop=True)
+    scenario_by_year = scenario.set_index("Year")
+    zijie_2025 = scenario_by_year.loc[FIRST_PROJECTION_YEAR, ZIJIE_REGIONS]
+    zijie_2026 = scenario_by_year.loc[
+        FIRST_PROJECTION_YEAR + 1,
+        ZIJIE_REGIONS,
+    ]
+    synthetic_2024 = 2 * zijie_2025 - zijie_2026
+
+    nonpositive = synthetic_2024[synthetic_2024.le(0)]
+    if not nonpositive.empty:
+        raise ValueError(
+            "Linear back-extrapolation gives non-positive synthetic Zijie "
+            f"2024 values: {nonpositive.to_dict()}"
+        )
+
+    scenario.loc[
+        scenario["Year"].eq(LAST_BGS_YEAR),
+        ZIJIE_REGIONS,
+    ] = synthetic_2024.to_numpy()
 
     return scenario
 
@@ -295,7 +318,7 @@ def build_projection():
         growth_by_region = {
             region: (
                 scenario_by_year.at[year, region]
-                / scenario_by_year.at[FIRST_PROJECTION_YEAR, region]
+                / scenario_by_year.at[LAST_BGS_YEAR, region]
             )
             for region in ZIJIE_REGIONS
         }
@@ -354,19 +377,15 @@ def validate_projection(output, bgs, scenario):
                 f"Output={output_total}, BGS={bgs_total}"
             )
 
-    splice_difference = (output[2025] - output[2024]).abs().max()
-    if splice_difference > 1e-9:
-        raise ValueError(f"2025 is not aligned to BGS 2024. Max diff: {splice_difference}")
-
     scenario_by_year = scenario.set_index("Year")
     for region in ZIJIE_REGIONS:
         region_output = output[output["ZijieRegion"].eq(region)]
-        anchor = region_output[2025].sum()
+        anchor = region_output[LAST_BGS_YEAR].sum()
         for year in PROJECTION_YEARS:
             expected = (
                 anchor
                 * scenario_by_year.at[year, region]
-                / scenario_by_year.at[2025, region]
+                / scenario_by_year.at[LAST_BGS_YEAR, region]
             )
             difference = region_output[year].sum() - expected
             if abs(difference) > 1e-6:

@@ -35,9 +35,13 @@ Run the BGS-aligned primary workflow:
 python aluminium/create_primary_country_projection_bgs_aligned.py
 ```
 
-It retains the OMNIA/INF value for 2019, uses observed BGS country production
-for 2020-2024, holds 2025 equal to 2024, and applies each Zijie region's growth
-index from 2026 onward. It writes both the country and OMNIA-region outputs.
+It retains the OMNIA/INF value for 2019 and uses observed BGS country
+production for 2020-2024. Zijie's 2024 regional value is replaced in memory
+with a linear back-extrapolation, `2 × Zijie 2025 − Zijie 2026`. Each country
+is anchored to its BGS 2024 value and follows its Zijie region's trajectory
+relative to that synthetic 2024 value from 2025 onward. This avoids a flat
+2024-2025 splice while preserving BGS history and Zijie's future curve shape.
+It writes both the country and OMNIA-region outputs.
 
 Run the 2025-aligned secondary and scrap workflow:
 
