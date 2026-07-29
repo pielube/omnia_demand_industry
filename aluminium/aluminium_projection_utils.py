@@ -11,6 +11,22 @@ OMNIA_MAPPING_CSV = SHARED_INPUTS_DIR / "OMNIA_region_mapping_241120.csv"
 BASE_YEAR = 2019
 END_YEAR = 2050
 YEARS = [str(year) for year in range(BASE_YEAR, END_YEAR + 1)]
+MILESTONE_YEARS = [
+    2019,
+    2023,
+    2025,
+    2030,
+    2035,
+    2040,
+    2045,
+    2050,
+    2060,
+    2070,
+    2080,
+    2090,
+    2100,
+]
+SOURCE_MILESTONE_YEARS = [year for year in MILESTONE_YEARS if year <= END_YEAR]
 
 
 def add_omnia_regions(projection):
@@ -94,27 +110,36 @@ def aggregate_to_omnia_regions(projection):
 
 
 def calculate_growth_rates(projection):
-    """Calculate percentage growth from the 2019 base year."""
-    growth = projection.copy()
-    growth[YEARS] = growth[YEARS].apply(pd.to_numeric, errors="raise")
-    base_values = growth[str(BASE_YEAR)]
+    """Create a milestone-year index with 2019 equal to one."""
+    indexed = projection.set_index("OMNIARegion").copy()
+    source_years = [str(year) for year in SOURCE_MILESTONE_YEARS]
+    indexed[source_years] = indexed[source_years].apply(
+        pd.to_numeric,
+        errors="raise",
+    )
+    base_values = indexed[str(BASE_YEAR)]
     zero_base = base_values.eq(0)
 
-    nonzero_future = growth.loc[zero_base, YEARS].ne(0).any(axis=1)
+    nonzero_future = indexed.loc[zero_base, source_years].ne(0).any(axis=1)
     if nonzero_future.any():
-        regions = growth.loc[
-            zero_base & nonzero_future, "OMNIARegion"
-        ].tolist()
+        regions = indexed.index[zero_base & nonzero_future].tolist()
         raise ValueError(
             "Cannot calculate growth for zero-base regions with nonzero "
             f"future values: {regions}"
         )
 
-    growth.loc[~zero_base, YEARS] = (
-        growth.loc[~zero_base, YEARS]
+    growth = (
+        indexed.loc[:, source_years]
         .div(base_values.loc[~zero_base], axis=0)
-        .sub(1)
-        .mul(100)
+        .transpose()
     )
-    growth.loc[zero_base, YEARS] = 0.0
-    return growth
+    growth.loc[:, zero_base] = 1.0
+    growth.index = growth.index.astype(int)
+
+    for year in MILESTONE_YEARS:
+        if year > END_YEAR:
+            growth.loc[year] = growth.loc[END_YEAR]
+
+    growth = growth.loc[MILESTONE_YEARS]
+    growth.index.name = "Year"
+    return growth.reset_index()

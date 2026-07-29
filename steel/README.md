@@ -30,6 +30,10 @@ Most generated outputs are kept as `.csv`. The workbook in `outputs/` is the fin
 
 ## Final Output
 
+The `*_omnia_growth_rates.csv` files are transposed milestone-year indices:
+years are rows, OMNIA regions are columns, 2019 equals 1, and the 2050 index is
+held constant through 2100.
+
 - `outputs/steel_demand_and_scrap.csv`
 - `outputs/Steel_demand_and_scrap_projections [SP].xlsx`: final output used to compute steel production for OMNIA.
 - `outputs/steel_production_omnia.csv`

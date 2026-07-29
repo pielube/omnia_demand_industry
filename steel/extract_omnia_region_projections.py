@@ -15,6 +15,22 @@ SHEET_NAME = "OMNIA_Data"
 BASE_YEAR = 2019
 END_YEAR = 2050
 RANGE_END_COLUMN = column_index_from_string("AT")
+MILESTONE_YEARS = [
+    2019,
+    2023,
+    2025,
+    2030,
+    2035,
+    2040,
+    2045,
+    2050,
+    2060,
+    2070,
+    2080,
+    2090,
+    2100,
+]
+SOURCE_MILESTONE_YEARS = [year for year in MILESTONE_YEARS if year <= END_YEAR]
 
 TABLES = {
     "production": {
@@ -111,30 +127,35 @@ def extract_table(worksheet, name: str, config: dict) -> pd.DataFrame:
     return projection
 
 
-def calculate_growth(projection: pd.DataFrame) -> pd.DataFrame:
-    """Calculate each OMNIA region's percentage change from 2019."""
-    years = [str(year) for year in range(BASE_YEAR, END_YEAR + 1)]
-    growth = projection.copy()
-    base_values = projection[str(BASE_YEAR)]
+def calculate_growth_rates(projection: pd.DataFrame) -> pd.DataFrame:
+    """Create a milestone-year index with 2019 equal to one."""
+    indexed = projection.set_index("OMNIARegion").copy()
+    source_years = [str(year) for year in SOURCE_MILESTONE_YEARS]
+    base_values = indexed[str(BASE_YEAR)]
     zero_base = base_values.eq(0)
-    nonzero_future = projection.loc[zero_base, years].ne(0).any(axis=1)
+    nonzero_future = indexed.loc[zero_base, source_years].ne(0).any(axis=1)
     if nonzero_future.any():
-        regions = projection.loc[
-            zero_base & nonzero_future, "OMNIARegion"
-        ].tolist()
+        regions = indexed.index[zero_base & nonzero_future].tolist()
         raise ValueError(
-            "Cannot calculate base-year growth for zero-base regions with "
+            "Cannot calculate growth for zero-base regions with "
             f"nonzero future values: {regions}"
         )
 
-    growth.loc[~zero_base, years] = (
-        projection.loc[~zero_base, years]
+    growth = (
+        indexed.loc[:, source_years]
         .div(base_values.loc[~zero_base], axis=0)
-        .sub(1)
-        .mul(100)
+        .transpose()
     )
-    growth.loc[zero_base, years] = 0.0
-    return growth
+    growth.loc[:, zero_base] = 1.0
+    growth.index = growth.index.astype(int)
+
+    for year in MILESTONE_YEARS:
+        if year > END_YEAR:
+            growth.loc[year] = growth.loc[END_YEAR]
+
+    growth = growth.loc[MILESTONE_YEARS]
+    growth.index.name = "Year"
+    return growth.reset_index()
 
 
 def main() -> None:
@@ -146,7 +167,7 @@ def main() -> None:
     OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
     for name, config in TABLES.items():
         projection = extract_table(worksheet, name, config)
-        growth = calculate_growth(projection)
+        growth = calculate_growth_rates(projection)
         projection.to_csv(config["projection_csv"], index=False)
         growth.to_csv(config["growth_csv"], index=False)
 

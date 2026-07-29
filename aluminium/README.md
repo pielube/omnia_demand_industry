@@ -52,6 +52,10 @@ writes country and OMNIA-region outputs for both metrics.
 
 ## Final Outputs
 
+The `*_omnia_growth_rates.csv` files are transposed milestone-year indices:
+years are rows, OMNIA regions are columns, 2019 equals 1, and the 2050 index is
+held constant through 2100.
+
 - `outputs/aluminium_primary_country.csv`
 - `outputs/aluminium_primary_omnia.csv`
 - `outputs/aluminium_primary_omnia_growth_rates.csv`

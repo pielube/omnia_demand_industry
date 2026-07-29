@@ -51,5 +51,6 @@ python cement/create_cement_omnia.py
 
 - `outputs/cement_country.csv`: country cement production in kt, 1951-2100.
 - `outputs/cement_omnia.csv`: OMNIA-region cement production in kt, 2019-2050.
-- `outputs/cement_omnia_growth_rates.csv`: OMNIA-region percentage growth
-  relative to 2019, for 2019-2050.
+- `outputs/cement_omnia_growth_rates.csv`: transposed milestone-year index with
+  OMNIA regions as columns, 2019 equal to 1, and 2050 held constant through
+  2100.
