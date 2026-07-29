@@ -170,7 +170,7 @@ def make_figure(
             markerfacecolor=ALIGNED_COLOR,
             markersize=3.5,
             linewidth=1.55,
-            label="BGS history and aligned projection",
+            label="BGS history and 2024-rebased projection",
         ),
         Line2D(
             [0],

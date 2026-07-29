@@ -69,15 +69,20 @@ extracted CSV. The workflow uses:
 
 - 2019: the existing OMNIA/INF value, to retain the previous baseline.
 - 2020-2024: observed BGS country values.
-- 2025: held equal to the BGS 2024 value, avoiding a level jump at the
-  historical/model boundary.
-- 2026-2050: each country's BGS 2024 value multiplied by its Zijie region's
-  growth index relative to 2025.
+- Synthetic Zijie 2024: the workbook's original 2024 regional value is replaced
+  in memory by a linear back-extrapolation from 2025-2026:
+  `synthetic 2024 = 2 * Zijie 2025 - Zijie 2026`.
+- 2025-2050: each country's BGS 2024 value multiplied by its Zijie region's
+  growth index relative to the synthetic Zijie 2024 value.
 
-Consequently, countries within the same Zijie region follow the same post-2025
-percentage trajectory, while the country and regional levels are anchored to
-BGS history. A country with zero BGS production in 2024 remains at zero unless
-an explicit new-production assumption is added.
+Consequently, 2024 matches BGS exactly and the 2024-2025 change follows the
+linear change implied by Zijie's 2025-2026 values, rather than being held flat.
+Countries within the same Zijie region follow the same post-2024 percentage
+trajectory, while their levels are anchored to BGS history. A country with zero
+BGS production in 2024 remains at zero unless an explicit new-production
+assumption is added. The original and synthetic Zijie 2024 regional values are
+recorded in
+`outputs/aluminium_primary_zijie_2024_linear_rebase_diagnostic.csv`.
 
 Run:
 
@@ -85,6 +90,7 @@ Run:
 python aluminium/create_primary_country_projection_bgs_aligned.py
 python aluminium/create_primary_bgs_aligned_omnia_region_projection.py
 python aluminium/plot_primary_bgs_alignment_top9.py
+python aluminium/plot_primary_bgs_alignment_top27.py
 ```
 
 The first script also compares OMNIA 2019 with BGS 2020. A difference is flagged
@@ -128,6 +134,7 @@ python aluminium/plot_secondary_scrap_2025_alignment_top27.py
 - `outputs/aluminium_scrap_country_projection_2019_2050.csv`
 - `outputs/aluminium_primary_country_projection_bgs_aligned_2019_2050.csv`
 - `outputs/aluminium_primary_bgs_vs_omnia_2019_misalignment.csv`
+- `outputs/aluminium_primary_zijie_2024_linear_rebase_diagnostic.csv`
 - `outputs/aluminium_primary_bgs_aligned_omnia_region_projection_2019_2050.csv`
 - `outputs/aluminium_primary_bgs_aligned_omnia_region_growth_2019_2050.csv`
 - `outputs/figures/aluminium_primary_bgs_alignment_top9_2024_3x3.pdf`
