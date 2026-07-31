@@ -27,9 +27,9 @@ ZIJIE_REGION_BY_ISO3 = {
     # Zijie modification to Bertram: UK split from Europe.
     "GBR": "UK",
 
-    # Bertram: North America.
+    # Project-specific regional convention: Mexico is grouped with South
+    # America, rather than with Bertram's North America region.
     "CAN": "North America",
-    "MEX": "North America",
     "USA": "North America",
 
     # Bertram: Middle East.
@@ -77,6 +77,7 @@ ZIJIE_REGION_BY_ISO3 = {
     "GUY": "South America",
     "HTI": "South America",
     "JAM": "South America",
+    "MEX": "South America",
     "SUR": "South America",
     "VEN": "South America",
 }

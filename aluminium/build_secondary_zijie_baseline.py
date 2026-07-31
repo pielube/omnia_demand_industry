@@ -2,6 +2,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from secondary_2024_allocation import read_secondary_2024_allocation_weights
+
 
 BASE_DIR = Path(__file__).resolve().parent
 INPUTS_DIR = BASE_DIR / "inputs"
@@ -113,14 +115,22 @@ def make_allocation_weights():
         .to_dict()
     )
 
-    weights["RegionShare"] = weights.apply(
+    weights["RegionShare2019"] = weights.apply(
         lambda row: row["SecondaryProduction2019_kt"] / region_weight_totals[row["ZijieRegion"]],
         axis=1,
     )
 
     return weights[
-        ["ISO3", "ZijieRegion", "SecondaryProduction2019_kt", "RegionShare", "AllocationMethod"]
-    ]
+        [
+            "ISO3",
+            "ZijieRegion",
+            "SecondaryProduction2019_kt",
+            "RegionShare2019",
+            "AllocationMethod",
+        ]
+    ].rename(
+        columns={"AllocationMethod": "AllocationMethod2019"}
+    )
 
 
 def read_omnia_2019_region_totals():
@@ -139,17 +149,32 @@ def read_omnia_2019_region_totals():
 def build_projection(scenario_sheet=SCENARIO_SHEET):
     countries = make_country_frame()
     scenario = read_zijie_secondary_scenario(scenario_sheet)
-    weights = make_allocation_weights()
+    weights_2019 = make_allocation_weights()
+    weights_2024 = read_secondary_2024_allocation_weights()
 
     output = countries.merge(
-        weights,
+        weights_2019,
+        on=["ISO3", "ZijieRegion"],
+        how="left",
+    ).merge(
+        weights_2024,
         on=["ISO3", "ZijieRegion"],
         how="left",
     )
     output["SecondaryProduction2019_kt"] = output["SecondaryProduction2019_kt"].fillna(0)
-    output["RegionShare"] = output["RegionShare"].fillna(0)
-    output["AllocationMethod"] = output["AllocationMethod"].fillna(
+    output["RegionShare2019"] = output["RegionShare2019"].fillna(0)
+    output["AllocationMethod2019"] = output["AllocationMethod2019"].fillna(
         "No 2019 secondary producer share; assigned zero"
+    )
+    output["SecondaryEstimate2024Country"] = output[
+        "SecondaryEstimate2024Country"
+    ].fillna("")
+    output["SecondaryEstimate2024_kt"] = output[
+        "SecondaryEstimate2024_kt"
+    ].fillna(0)
+    output["RegionShare2024"] = output["RegionShare2024"].fillna(0)
+    output["AllocationMethod2024"] = output["AllocationMethod2024"].fillna(
+        "No 2024 secondary production estimate; assigned zero share"
     )
 
     for year in YEARS:
@@ -160,7 +185,10 @@ def build_projection(scenario_sheet=SCENARIO_SHEET):
     scenario_by_year = scenario.set_index("Year")
     for year in ZIJIE_YEARS:
         output[year] = output.apply(
-            lambda row: scenario_by_year.at[year, row["ZijieRegion"]] * row["RegionShare"],
+            lambda row: (
+                scenario_by_year.at[year, row["ZijieRegion"]]
+                * row["RegionShare2024"]
+            ),
             axis=1,
         )
 
@@ -178,8 +206,12 @@ def build_projection(scenario_sheet=SCENARIO_SHEET):
             "Metric",
             "Unit",
             "SecondaryProduction2019_kt",
-            "RegionShare",
-            "AllocationMethod",
+            "RegionShare2019",
+            "AllocationMethod2019",
+            "SecondaryEstimate2024Country",
+            "SecondaryEstimate2024_kt",
+            "RegionShare2024",
+            "AllocationMethod2024",
         ] + YEARS
     ]
 

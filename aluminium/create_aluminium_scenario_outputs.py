@@ -24,6 +24,7 @@ def main():
         run_primary_workflow(
             scenario_sheet=scenario_sheet,
             output_dir=output_dir,
+            write_totals=False,
         )
         run_secondary_scrap_workflow(
             scenario_sheet=scenario_sheet,

@@ -392,6 +392,7 @@ def validate_projection(output, bgs, scenario):
 def run_workflow(
     scenario_sheet=SCENARIO_SHEET,
     output_dir=OUTPUTS_DIR,
+    write_totals=True,
 ):
     output_dir = Path(output_dir)
     output_csv = output_dir / "aluminium_primary_country.csv"
@@ -411,7 +412,7 @@ def run_workflow(
         omnia_growth_output_csv,
         index=False,
     )
-    total_outputs = write_total_outputs(output_dir)
+    total_outputs = write_total_outputs(output_dir) if write_totals else None
 
     major = report[report["MajorMisalignment"]]
     print(f"Scenario sheet: {scenario_sheet}")
