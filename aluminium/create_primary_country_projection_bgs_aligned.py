@@ -8,6 +8,7 @@ from aluminium_projection_utils import (
     aggregate_to_omnia_regions,
     calculate_growth_rates,
 )
+from create_total_aluminium_outputs import write_total_outputs
 from build_primary_zijie_baseline import (
     build_projection as build_zijie_projection,
     make_total_checks as validate_zijie_projection,
@@ -410,6 +411,7 @@ def run_workflow(
         omnia_growth_output_csv,
         index=False,
     )
+    total_outputs = write_total_outputs(output_dir)
 
     major = report[report["MajorMisalignment"]]
     print(f"Scenario sheet: {scenario_sheet}")
@@ -431,11 +433,14 @@ def run_workflow(
                 ]
             ].to_string(index=False)
         )
-    return {
+    outputs = {
         "country": output_csv,
         "omnia": omnia_output_csv,
         "growth": omnia_growth_output_csv,
     }
+    if total_outputs is not None:
+        outputs["total"] = total_outputs
+    return outputs
 
 
 def main():

@@ -9,7 +9,9 @@ projections for primary production, secondary production, and scrap.
   workbook and the extracted BGS primary-production history.
 - `maps/`: derived country allocation maps for primary and secondary
   production.
-- `outputs/`: the six absolute projection CSVs and three OMNIA growth-rate CSVs.
+- `outputs/`: scenario subdirectories containing country projections,
+  OMNIA-region projections, and growth-rate CSVs for primary, secondary, scrap,
+  and total aluminium production.
 - `../shared_inputs/`: central reference inputs, including the OMNIA
   country-region mapping and INF workbook.
 
@@ -72,7 +74,7 @@ python aluminium/create_aluminium_scenario_outputs.py
 This applies the same primary BGS alignment, secondary OMNIA baseline, 2025
 trend alignment, country allocation, and OMNIA aggregation methods to Zijie's
 `recycling rate scenario` and `lifetime scenario` sheets. Outputs use the same
-nine filenames as the baseline. Scenario outputs are written to:
+twelve filenames as the baseline. Scenario outputs are written to:
 
 - `outputs/baseline/`
 - `outputs/recycling_rate_scenario/`
@@ -93,6 +95,13 @@ held constant through 2100.
 - `outputs/baseline/aluminium_scrap_country.csv`
 - `outputs/baseline/aluminium_scrap_omnia.csv`
 - `outputs/baseline/aluminium_scrap_omnia_growth_rates.csv`
+- `outputs/baseline/aluminium_total_country.csv`
+- `outputs/baseline/aluminium_total_omnia.csv`
+- `outputs/baseline/aluminium_total_omnia_growth_rates.csv`
+
+The `aluminium_total_*` files sum primary and secondary aluminium ingot
+production at country level, then use the same OMNIA aggregation and
+milestone-year growth-rate formats as the individual metrics.
 
 Primary-production history is sourced from the British Geological Survey,
 *World Mineral Production 2020-24*. BGS does not provide equivalent

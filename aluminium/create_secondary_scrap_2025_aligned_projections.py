@@ -8,6 +8,7 @@ from aluminium_projection_utils import (
     aggregate_to_omnia_regions,
     calculate_growth_rates,
 )
+from create_total_aluminium_outputs import write_total_outputs
 from build_scrap_zijie_baseline import (
     build_projection as build_scrap_baseline,
     make_total_checks as validate_scrap_baseline,
@@ -263,6 +264,9 @@ def run_workflow(
             "omnia": config["omnia_totals"],
             "growth": config["omnia_growth"],
         }
+    total_outputs = write_total_outputs(output_dir)
+    if total_outputs is not None:
+        outputs["total"] = total_outputs
     return outputs
 
 
