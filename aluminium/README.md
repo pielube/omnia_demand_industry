@@ -23,9 +23,17 @@ python aluminium/create_primary_producer_zijie_map.py
 python aluminium/create_secondary_producer_zijie_map.py
 ```
 
-The `build_*_zijie_baseline.py` modules construct the original Zijie-allocated
-country baselines in memory. They are support modules for the final workflows
-and do not write legacy projection files.
+The secondary producer map uses the 2019 OMNIA-region values in
+`INF_Data!G232:AH232` as binding totals (31.75 Mt globally). Available
+secondary-country observations provide within-region allocation weights.
+Where those observations are absent, OMNIA primary-production country shares
+are used; a single-country region is assigned directly. Zijie data is not used
+to construct the 2019 secondary baseline.
+
+The `build_*_zijie_baseline.py` modules construct the country baselines in
+memory. The secondary baseline is OMNIA-controlled in 2019; the later modeled
+years use Zijie's regional trajectories. These are support modules for the
+final workflows and do not write legacy projection files.
 
 ## Final Workflows
 
@@ -49,10 +57,11 @@ Run the 2025-aligned secondary and scrap workflow:
 python aluminium/create_secondary_scrap_2025_aligned_projections.py
 ```
 
-It retains the existing Zijie-allocated values through 2024, estimates each
-country's 2025 value using an ordinary least-squares trend over 2019-2024
-(floored at zero), and applies Zijie regional growth from 2026 onward. It
-writes country and OMNIA-region outputs for both metrics.
+For secondary aluminium, it starts from the OMNIA-controlled 2019 country
+allocation described above. It retains the constructed baseline values through
+2024, estimates each country's 2025 value using an ordinary least-squares trend
+over 2019-2024 (floored at zero), and applies Zijie regional growth from 2026
+onward. It writes country and OMNIA-region outputs for both metrics.
 
 ## Final Outputs
 

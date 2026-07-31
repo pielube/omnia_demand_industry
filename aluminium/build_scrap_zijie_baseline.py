@@ -114,7 +114,9 @@ def make_secondary_shares():
     ).fillna(0)
     weights = weights[weights["SecondaryProduction2019_kt"] > 0].copy()
     weights = weights.rename(columns={"SecondaryProduction2019_kt": "ShareWeight"})
-    weights["AllocationMethod"] = "Scrap allocated using 2019 secondary producer share from INF_Data"
+    weights["AllocationMethod"] = (
+        "Scrap allocated using OMNIA-controlled 2019 secondary country share"
+    )
 
     missing_regions = sorted(set(ZIJIE_REGIONS) - set(weights["ZijieRegion"]))
     if missing_regions:

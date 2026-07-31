@@ -10,8 +10,8 @@ SHARED_INPUTS_DIR = BASE_DIR.parent / "shared_inputs"
 
 OMNIA_MAPPING_PATH = SHARED_INPUTS_DIR / "OMNIA_region_mapping_241120.csv"
 SECONDARY_PRODUCER_MAP_PATH = MAPS_DIR / "aluminium_secondary_producers_zijie_region_map.csv"
-PRIMARY_PRODUCER_MAP_PATH = MAPS_DIR / "aluminium_primary_producers_zijie_region_map.csv"
 ZIJIE_SCENARIO_PATH = INPUTS_DIR / "10 regions Al data.xlsx"
+INF_WORKBOOK_PATH = SHARED_INPUTS_DIR / "VT_OMNIA_IIS_INM_INF_v0.4.xlsx"
 
 SCENARIO_SHEET = "baseline"
 SCENARIO_LABEL = "Secondary Al ingot (kt)"
@@ -70,67 +70,37 @@ def make_country_frame():
     return countries
 
 
-def extrapolate_base_year_from_zijie(scenario, region):
-    start_value = scenario.loc[scenario["Year"].eq(FIRST_ZIJIE_YEAR), region].iloc[0]
-    trend_end_year = min(2030, END_YEAR)
-    trend_end_value = scenario.loc[scenario["Year"].eq(trend_end_year), region].iloc[0]
-    annual_change = (trend_end_value - start_value) / (trend_end_year - FIRST_ZIJIE_YEAR)
-    extrapolated = start_value - annual_change * (FIRST_ZIJIE_YEAR - BASE_YEAR)
-    return max(0.0, extrapolated)
-
-
-def make_proxy_weights_from_primary(scenario, missing_regions):
-    primary_map = pd.read_csv(PRIMARY_PRODUCER_MAP_PATH)
-    required_columns = {"ISO3", "ZijieRegion", "PrimaryProduction2019_kt"}
-    missing = required_columns - set(primary_map.columns)
-    if missing:
-        raise ValueError(f"Primary producer map is missing columns: {sorted(missing)}")
-
-    proxy = primary_map[primary_map["ZijieRegion"].isin(missing_regions)].copy()
-    proxy["PrimaryProduction2019_kt"] = pd.to_numeric(
-        proxy["PrimaryProduction2019_kt"],
-        errors="coerce",
-    ).fillna(0)
-    proxy = proxy[proxy["PrimaryProduction2019_kt"] > 0].copy()
-
-    frames = []
-    for region, region_rows in proxy.groupby("ZijieRegion"):
-        primary_total = region_rows["PrimaryProduction2019_kt"].sum()
-        secondary_total = extrapolate_base_year_from_zijie(scenario, region)
-        region_rows = region_rows.copy()
-        region_rows["SecondaryProduction2019_kt"] = (
-            region_rows["PrimaryProduction2019_kt"] / primary_total * secondary_total
-        )
-        region_rows["AllocationMethod"] = (
-            f"Primary producer share proxy; no explicit 2019 secondary producer map for {region}"
-        )
-        frames.append(region_rows[["ISO3", "ZijieRegion", "SecondaryProduction2019_kt", "AllocationMethod"]])
-
-    if not frames:
-        return pd.DataFrame(columns=["ISO3", "ZijieRegion", "SecondaryProduction2019_kt", "AllocationMethod"])
-
-    return pd.concat(frames, ignore_index=True)
-
-
-def make_allocation_weights(scenario):
+def make_allocation_weights():
     producer_map = pd.read_csv(SECONDARY_PRODUCER_MAP_PATH)
-    required_columns = {"ISO3", "ZijieRegion", "SecondaryProduction2019_kt"}
+    required_columns = {
+        "ISO3",
+        "ZijieRegion",
+        "SecondaryProduction2019_kt",
+        "AllocationMethod",
+    }
     missing = required_columns - set(producer_map.columns)
     if missing:
         raise ValueError(f"Secondary producer map is missing columns: {sorted(missing)}")
 
-    weights = producer_map[["ISO3", "ZijieRegion", "SecondaryProduction2019_kt"]].copy()
+    weights = producer_map[
+        [
+            "ISO3",
+            "ZijieRegion",
+            "SecondaryProduction2019_kt",
+            "AllocationMethod",
+        ]
+    ].copy()
     weights["SecondaryProduction2019_kt"] = pd.to_numeric(
         weights["SecondaryProduction2019_kt"],
         errors="coerce",
     ).fillna(0)
     weights = weights[weights["SecondaryProduction2019_kt"] > 0].copy()
-    weights["AllocationMethod"] = "2019 secondary producer share from INF_Data"
-
     missing_regions = sorted(set(ZIJIE_REGIONS) - set(weights["ZijieRegion"]))
     if missing_regions:
-        proxy_weights = make_proxy_weights_from_primary(scenario, missing_regions)
-        weights = pd.concat([weights, proxy_weights], ignore_index=True)
+        raise ValueError(
+            "OMNIA-allocated secondary producer map has no countries in "
+            f"these Zijie regions: {missing_regions}"
+        )
 
     region_weight_totals = (
         weights
@@ -144,19 +114,28 @@ def make_allocation_weights(scenario):
         axis=1,
     )
 
-    still_missing = sorted(set(ZIJIE_REGIONS) - set(weights["ZijieRegion"]))
-    if still_missing:
-        raise ValueError(f"No allocation weights for Zijie regions: {still_missing}")
-
     return weights[
         ["ISO3", "ZijieRegion", "SecondaryProduction2019_kt", "RegionShare", "AllocationMethod"]
     ]
 
 
+def read_omnia_2019_region_totals():
+    inf_data = pd.read_excel(
+        INF_WORKBOOK_PATH,
+        sheet_name="INF_Data",
+        header=None,
+    )
+    region_codes = inf_data.iloc[226, 6:34].tolist()
+    totals_kt = (
+        pd.to_numeric(inf_data.iloc[231, 6:34], errors="raise") * 1000
+    ).tolist()
+    return dict(zip(region_codes, totals_kt))
+
+
 def build_projection():
     countries = make_country_frame()
     scenario = read_zijie_secondary_scenario()
-    weights = make_allocation_weights(scenario)
+    weights = make_allocation_weights()
 
     output = countries.merge(
         weights,
@@ -205,6 +184,20 @@ def build_projection():
 
 def make_total_checks(output, scenario):
     rows = []
+    omnia_targets = read_omnia_2019_region_totals()
+    for region, target in omnia_targets.items():
+        allocated = output.loc[output["OMNIARegion"].eq(region), BASE_YEAR].sum()
+        rows.append(
+            {
+                "CheckType": "OMNIARegion",
+                "ZijieRegion": region,
+                "Year": BASE_YEAR,
+                "AllocatedTotal_kt": allocated,
+                "ZijieTotal_kt": target,
+                "Difference_kt": allocated - target,
+            }
+        )
+
     for year in ZIJIE_YEARS:
         allocated_total = output[year].sum()
         zijie_total = scenario.loc[scenario["Year"].eq(year), ZIJIE_REGIONS].sum(axis=1).iloc[0]
