@@ -38,8 +38,12 @@ ZIJIE_REGIONS = [
 ]
 
 
-def read_zijie_scrap_scenario():
-    raw = pd.read_excel(ZIJIE_SCENARIO_PATH, sheet_name=SCENARIO_SHEET, header=None)
+def read_zijie_scrap_scenario(scenario_sheet=SCENARIO_SHEET):
+    raw = pd.read_excel(
+        ZIJIE_SCENARIO_PATH,
+        sheet_name=scenario_sheet,
+        header=None,
+    )
     matches = raw.iloc[0].eq(SCENARIO_LABEL)
     if matches.sum() != 1:
         raise ValueError(f"Could not find one block labelled {SCENARIO_LABEL!r}.")
@@ -136,9 +140,9 @@ def make_secondary_shares():
     return weights[["ISO3", "ZijieRegion", "ShareWeight", "RegionShare", "AllocationMethod"]]
 
 
-def build_projection():
+def build_projection(scenario_sheet=SCENARIO_SHEET):
     countries = make_country_frame()
-    scenario = read_zijie_scrap_scenario()
+    scenario = read_zijie_scrap_scenario(scenario_sheet)
     weights = make_secondary_shares()
 
     output = countries.merge(

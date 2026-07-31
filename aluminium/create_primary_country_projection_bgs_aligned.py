@@ -16,20 +16,10 @@ from build_primary_zijie_baseline import (
 
 BASE_DIR = Path(__file__).resolve().parent
 INPUTS_DIR = BASE_DIR / "inputs"
-OUTPUTS_DIR = BASE_DIR / "outputs"
+OUTPUTS_DIR = BASE_DIR / "outputs" / "baseline"
 
 BGS_HISTORY_PATH = INPUTS_DIR / "bgs_primary_aluminium_2020_2024.csv"
 ZIJIE_SCENARIO_PATH = INPUTS_DIR / "10 regions Al data.xlsx"
-
-OUTPUT_CSV = (
-    OUTPUTS_DIR / "aluminium_primary_country.csv"
-)
-OMNIA_OUTPUT_CSV = (
-    OUTPUTS_DIR / "aluminium_primary_omnia.csv"
-)
-OMNIA_GROWTH_OUTPUT_CSV = (
-    OUTPUTS_DIR / "aluminium_primary_omnia_growth_rates.csv"
-)
 
 SCENARIO_SHEET = "baseline"
 SCENARIO_LABEL = "Primary Al ingot (kt)"
@@ -82,8 +72,8 @@ BGS_PUBLISHED_WORLD_TOTAL_KT = {
 BGS_WORLD_TOTAL_ROUNDING_TOLERANCE_KT = 50.0
 
 
-def read_old_projection():
-    old, scenario = build_zijie_projection()
+def read_old_projection(scenario_sheet=SCENARIO_SHEET):
+    old, scenario = build_zijie_projection(scenario_sheet)
     validate_zijie_projection(old, scenario)
     old = pd.read_csv(StringIO(old.to_csv(index=False)))
     required = {
@@ -143,8 +133,12 @@ def read_bgs_history():
     ]
 
 
-def read_zijie_scenario():
-    raw = pd.read_excel(ZIJIE_SCENARIO_PATH, sheet_name=SCENARIO_SHEET, header=None)
+def read_zijie_scenario(scenario_sheet=SCENARIO_SHEET):
+    raw = pd.read_excel(
+        ZIJIE_SCENARIO_PATH,
+        sheet_name=scenario_sheet,
+        header=None,
+    )
     matches = raw.iloc[0].eq(SCENARIO_LABEL)
     if matches.sum() != 1:
         raise ValueError(f"Could not find one block labelled {SCENARIO_LABEL!r}.")
@@ -270,10 +264,10 @@ def make_misalignment_report(output):
     ).reset_index(drop=True)
 
 
-def build_projection():
-    old = read_old_projection()
+def build_projection(scenario_sheet=SCENARIO_SHEET):
+    old = read_old_projection(scenario_sheet)
     bgs = read_bgs_history()
-    scenario = read_zijie_scenario()
+    scenario = read_zijie_scenario(scenario_sheet)
 
     bgs_not_in_omnia = sorted(set(bgs["ISO3"]) - set(old["ISO3"]))
     if bgs_not_in_omnia:
@@ -394,23 +388,34 @@ def validate_projection(output, bgs, scenario):
                 )
 
 
-def main():
-    output, report, bgs, scenario = build_projection()
+def run_workflow(
+    scenario_sheet=SCENARIO_SHEET,
+    output_dir=OUTPUTS_DIR,
+):
+    output_dir = Path(output_dir)
+    output_csv = output_dir / "aluminium_primary_country.csv"
+    omnia_output_csv = output_dir / "aluminium_primary_omnia.csv"
+    omnia_growth_output_csv = (
+        output_dir / "aluminium_primary_omnia_growth_rates.csv"
+    )
+
+    output, report, bgs, scenario = build_projection(scenario_sheet)
     validate_projection(output, bgs, scenario)
 
-    OUTPUTS_DIR.mkdir(exist_ok=True)
-    output.to_csv(OUTPUT_CSV, index=False)
-    omnia_output = aggregate_to_omnia_regions(pd.read_csv(OUTPUT_CSV))
-    omnia_output.to_csv(OMNIA_OUTPUT_CSV, index=False)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output.to_csv(output_csv, index=False)
+    omnia_output = aggregate_to_omnia_regions(pd.read_csv(output_csv))
+    omnia_output.to_csv(omnia_output_csv, index=False)
     calculate_growth_rates(omnia_output).to_csv(
-        OMNIA_GROWTH_OUTPUT_CSV,
+        omnia_growth_output_csv,
         index=False,
     )
 
     major = report[report["MajorMisalignment"]]
-    print(f"Saved: {OUTPUT_CSV}")
-    print(f"Saved: {OMNIA_OUTPUT_CSV}")
-    print(f"Saved: {OMNIA_GROWTH_OUTPUT_CSV}")
+    print(f"Scenario sheet: {scenario_sheet}")
+    print(f"Saved: {output_csv}")
+    print(f"Saved: {omnia_output_csv}")
+    print(f"Saved: {omnia_growth_output_csv}")
     print(f"Rows: {len(output)}")
     print(f"BGS producer records: {len(bgs)}")
     print(f"Major OMNIA 2019 vs BGS 2020 misalignments: {len(major)}")
@@ -426,6 +431,15 @@ def main():
                 ]
             ].to_string(index=False)
         )
+    return {
+        "country": output_csv,
+        "omnia": omnia_output_csv,
+        "growth": omnia_growth_output_csv,
+    }
+
+
+def main():
+    run_workflow()
 
 
 if __name__ == "__main__":

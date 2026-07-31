@@ -38,8 +38,12 @@ ZIJIE_REGIONS = [
 ]
 
 
-def read_zijie_secondary_scenario():
-    raw = pd.read_excel(ZIJIE_SCENARIO_PATH, sheet_name=SCENARIO_SHEET, header=None)
+def read_zijie_secondary_scenario(scenario_sheet=SCENARIO_SHEET):
+    raw = pd.read_excel(
+        ZIJIE_SCENARIO_PATH,
+        sheet_name=scenario_sheet,
+        header=None,
+    )
     matches = raw.iloc[0].eq(SCENARIO_LABEL)
     if matches.sum() != 1:
         raise ValueError(f"Could not find one block labelled {SCENARIO_LABEL!r}.")
@@ -132,9 +136,9 @@ def read_omnia_2019_region_totals():
     return dict(zip(region_codes, totals_kt))
 
 
-def build_projection():
+def build_projection(scenario_sheet=SCENARIO_SHEET):
     countries = make_country_frame()
-    scenario = read_zijie_secondary_scenario()
+    scenario = read_zijie_secondary_scenario(scenario_sheet)
     weights = make_allocation_weights()
 
     output = countries.merge(

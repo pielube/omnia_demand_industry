@@ -63,21 +63,36 @@ allocation described above. It retains the constructed baseline values through
 over 2019-2024 (floored at zero), and applies Zijie regional growth from 2026
 onward. It writes country and OMNIA-region outputs for both metrics.
 
+Run the recycling-rate and lifetime scenario workflows:
+
+```text
+python aluminium/create_aluminium_scenario_outputs.py
+```
+
+This applies the same primary BGS alignment, secondary OMNIA baseline, 2025
+trend alignment, country allocation, and OMNIA aggregation methods to Zijie's
+`recycling rate scenario` and `lifetime scenario` sheets. Outputs use the same
+nine filenames as the baseline. Scenario outputs are written to:
+
+- `outputs/baseline/`
+- `outputs/recycling_rate_scenario/`
+- `outputs/lifetime_scenario/`
+
 ## Final Outputs
 
 The `*_omnia_growth_rates.csv` files are transposed milestone-year indices:
 years are rows, OMNIA regions are columns, 2019 equals 1, and the 2050 index is
 held constant through 2100.
 
-- `outputs/aluminium_primary_country.csv`
-- `outputs/aluminium_primary_omnia.csv`
-- `outputs/aluminium_primary_omnia_growth_rates.csv`
-- `outputs/aluminium_secondary_country.csv`
-- `outputs/aluminium_secondary_omnia.csv`
-- `outputs/aluminium_secondary_omnia_growth_rates.csv`
-- `outputs/aluminium_scrap_country.csv`
-- `outputs/aluminium_scrap_omnia.csv`
-- `outputs/aluminium_scrap_omnia_growth_rates.csv`
+- `outputs/baseline/aluminium_primary_country.csv`
+- `outputs/baseline/aluminium_primary_omnia.csv`
+- `outputs/baseline/aluminium_primary_omnia_growth_rates.csv`
+- `outputs/baseline/aluminium_secondary_country.csv`
+- `outputs/baseline/aluminium_secondary_omnia.csv`
+- `outputs/baseline/aluminium_secondary_omnia_growth_rates.csv`
+- `outputs/baseline/aluminium_scrap_country.csv`
+- `outputs/baseline/aluminium_scrap_omnia.csv`
+- `outputs/baseline/aluminium_scrap_omnia_growth_rates.csv`
 
 Primary-production history is sourced from the British Geological Survey,
 *World Mineral Production 2020-24*. BGS does not provide equivalent

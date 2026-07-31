@@ -20,7 +20,7 @@ from build_secondary_zijie_baseline import (
 
 BASE_DIR = Path(__file__).resolve().parent
 INPUTS_DIR = BASE_DIR / "inputs"
-OUTPUTS_DIR = BASE_DIR / "outputs"
+OUTPUTS_DIR = BASE_DIR / "outputs" / "baseline"
 
 ZIJIE_SCENARIO_PATH = INPUTS_DIR / "10 regions Al data.xlsx"
 SCENARIO_SHEET = "baseline"
@@ -52,42 +52,47 @@ ALIGNMENT_METHOD = (
     "Zijie regional growth indexed to 2025 thereafter"
 )
 
-CONFIGS = [
-    {
-        "name": "secondary",
-        "scenario_label": "Secondary Al ingot (kt)",
-        "baseline_builder": build_secondary_baseline,
-        "baseline_validator": validate_secondary_baseline,
-        "aligned_country": (
-            OUTPUTS_DIR / "aluminium_secondary_country.csv"
-        ),
-        "omnia_totals": (
-            OUTPUTS_DIR / "aluminium_secondary_omnia.csv"
-        ),
-        "omnia_growth": (
-            OUTPUTS_DIR / "aluminium_secondary_omnia_growth_rates.csv"
-        ),
-    },
-    {
-        "name": "scrap",
-        "scenario_label": "Al scrap (kt)",
-        "baseline_builder": build_scrap_baseline,
-        "baseline_validator": validate_scrap_baseline,
-        "aligned_country": (
-            OUTPUTS_DIR / "aluminium_scrap_country.csv"
-        ),
-        "omnia_totals": (
-            OUTPUTS_DIR / "aluminium_scrap_omnia.csv"
-        ),
-        "omnia_growth": (
-            OUTPUTS_DIR / "aluminium_scrap_omnia_growth_rates.csv"
-        ),
-    },
-]
+def make_configs(output_dir):
+    return [
+        {
+            "name": "secondary",
+            "scenario_label": "Secondary Al ingot (kt)",
+            "baseline_builder": build_secondary_baseline,
+            "baseline_validator": validate_secondary_baseline,
+            "aligned_country": (
+                output_dir / "aluminium_secondary_country.csv"
+            ),
+            "omnia_totals": (
+                output_dir / "aluminium_secondary_omnia.csv"
+            ),
+            "omnia_growth": (
+                output_dir / "aluminium_secondary_omnia_growth_rates.csv"
+            ),
+        },
+        {
+            "name": "scrap",
+            "scenario_label": "Al scrap (kt)",
+            "baseline_builder": build_scrap_baseline,
+            "baseline_validator": validate_scrap_baseline,
+            "aligned_country": (
+                output_dir / "aluminium_scrap_country.csv"
+            ),
+            "omnia_totals": (
+                output_dir / "aluminium_scrap_omnia.csv"
+            ),
+            "omnia_growth": (
+                output_dir / "aluminium_scrap_omnia_growth_rates.csv"
+            ),
+        },
+    ]
 
 
-def read_zijie_scenario(label):
-    raw = pd.read_excel(ZIJIE_SCENARIO_PATH, sheet_name=SCENARIO_SHEET, header=None)
+def read_zijie_scenario(label, scenario_sheet=SCENARIO_SHEET):
+    raw = pd.read_excel(
+        ZIJIE_SCENARIO_PATH,
+        sheet_name=scenario_sheet,
+        header=None,
+    )
     matches = raw.iloc[0].eq(label)
     if matches.sum() != 1:
         raise ValueError(f"Could not find one block labelled {label!r}.")
@@ -111,18 +116,21 @@ def read_zijie_scenario(label):
     return scenario
 
 
-def build_aligned_projection(config):
-    old, baseline_scenario = config["baseline_builder"]()
+def build_aligned_projection(config, scenario_sheet=SCENARIO_SHEET):
+    old, baseline_scenario = config["baseline_builder"](scenario_sheet)
     config["baseline_validator"](old, baseline_scenario)
     old = pd.read_csv(StringIO(old.to_csv(index=False)))
     required = {"ISO3", "ZijieRegion", *[str(year) for year in YEARS]}
     missing = required - set(old.columns)
     if missing:
         raise ValueError(
-            f"{config['old_country'].name} is missing columns: {sorted(missing)}"
+            f"{config['name']} baseline is missing columns: {sorted(missing)}"
         )
 
-    scenario = read_zijie_scenario(config["scenario_label"])
+    scenario = read_zijie_scenario(
+        config["scenario_label"],
+        scenario_sheet,
+    )
     scenario_by_year = scenario.set_index("Year")
     aligned = old.copy()
 
@@ -222,11 +230,16 @@ def validate_projection(old, aligned, scenario, name):
                 )
 
 
-def main():
-    OUTPUTS_DIR.mkdir(exist_ok=True)
+def run_workflow(
+    scenario_sheet=SCENARIO_SHEET,
+    output_dir=OUTPUTS_DIR,
+):
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-    for config in CONFIGS:
-        old, aligned = build_aligned_projection(config)
+    outputs = {}
+    for config in make_configs(output_dir):
+        old, aligned = build_aligned_projection(config, scenario_sheet)
         aligned.to_csv(config["aligned_country"], index=False)
         omnia_output = aggregate_to_omnia_regions(
             pd.read_csv(config["aligned_country"])
@@ -245,6 +258,16 @@ def main():
             f"{old[str(ALIGNMENT_YEAR)].sum():.3f} / "
             f"{aligned[str(ALIGNMENT_YEAR)].sum():.3f}"
         )
+        outputs[config["name"]] = {
+            "country": config["aligned_country"],
+            "omnia": config["omnia_totals"],
+            "growth": config["omnia_growth"],
+        }
+    return outputs
+
+
+def main():
+    run_workflow()
 
 
 if __name__ == "__main__":
