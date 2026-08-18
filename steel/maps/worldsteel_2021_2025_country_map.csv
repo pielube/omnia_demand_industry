@@ -1,0 +1,121 @@
+SourceCountry,ISO3,OMNIARegion,SharedMappingCountry
+Albania,ALB,ENE,Albania
+Algeria,DZA,AFN,Algeria
+Angola,AGO,AFZ,Angola
+Argentina,ARG,LAM,Argentina
+Armenia,ARM,ASC,Armenia
+Australia,AUS,ANZ,Australia
+Austria,AUT,EUW,Austria
+Azerbaijan,AZE,ASC,Azerbaijan
+Bahrain,BHR,MEA,Bahrain
+Bangladesh,BGD,ASO,Bangladesh
+Belarus,BLR,ENE,Belarus
+Belgium,BEL,EUW,Belgium
+Bolivia,BOL,LAM,Bolivia (Plurinational State of)
+Bosnia and Herzegovina,BIH,ENE,Bosnia and Herzegovina
+Brazil,BRA,BRA,Brazil
+Bulgaria,BGR,EUE,Bulgaria
+Cameroon,CMR,AFW,Cameroon
+Canada,CAN,CAN,Canada
+Chile,CHL,CHL,Chile
+China,CHN,CHN,China
+Colombia,COL,LAM,Colombia
+Costa Rica,CRI,LAM,Costa Rica
+Croatia,HRV,EUE,Croatia
+Cuba,CUB,LAM,Cuba
+Cyprus,CYP,EUM,Cyprus
+Czechia,CZE,EUE,Czechia
+D.P.R. Korea,PRK,ASE,Democratic People's Republic of Korea
+Denmark,DNK,EUW,Denmark
+Dominican Republic,DOM,LAM,Dominican Republic
+Ecuador,ECU,LAM,Ecuador
+Egypt,EGY,AFN,Egypt
+El Salvador,SLV,LAM,El Salvador
+Estonia,EST,EUE,Estonia
+Ethiopia,ETH,AFE,Ethiopia
+Finland,FIN,EUW,Finland
+France,FRA,EUM,France
+Georgia,GEO,ASC,Georgia
+Germany,DEU,EUW,Germany
+Ghana,GHA,AFW,Ghana
+Greece,GRC,EUM,Greece
+Guatemala,GTM,LAM,Guatemala
+Honduras,HND,LAM,Honduras
+Hong Kong,HKG,CHN,"China, Hong Kong Special Administrative Region"
+Hungary,HUN,EUE,Hungary
+Iceland,ISL,ENW,Iceland
+India,IND,IND,India
+Indonesia,IDN,IDN,Indonesia
+Iran,IRN,MEA,Iran (Islamic Republic of)
+Iraq,IRQ,MEA,Iraq
+Ireland,IRL,EUW,Ireland
+Israel,ISR,MDA,Israel
+Italy,ITA,EUM,Italy
+Ivory Coast,CIV,AFW,Cote d'Ivoire
+Jamaica,JAM,LAM,Jamaica
+Japan,JPN,JPN,Japan
+Jordan,JOR,MDA,Jordan
+Kazakhstan,KAZ,ASC,Kazakhstan
+Kenya,KEN,AFE,Kenya
+Kuwait,KWT,MEA,Kuwait
+Kyrgyzstan,KGZ,ASC,Kyrgyzstan
+Latvia,LVA,EUE,Latvia
+Lebanon,LBN,MDA,Lebanon
+Libya,LBY,AFN,Libya
+Lithuania,LTU,EUE,Lithuania
+Luxembourg,LUX,EUW,Luxembourg
+Macedonia,MKD,ENE,Republic of North Macedonia
+Malaysia,MYS,ASE,Malaysia
+Malta,MLT,EUM,Malta
+Mexico,MEX,MEX,Mexico
+Moldova,MDA,ENE,Republic of Moldova
+Montenegro,MNE,ENE,Montenegro
+Morocco,MAR,AFN,Morocco
+Myanmar,MMR,ASE,Myanmar
+Netherlands,NLD,EUW,Netherlands
+New Zealand,NZL,ANZ,New Zealand
+Nicaragua,NIC,LAM,Nicaragua
+Nigeria,NGA,NIG,Nigeria
+Norway,NOR,ENW,Norway
+Oman,OMN,MEA,Oman
+Pakistan,PAK,ASO,Pakistan
+Panama,PAN,LAM,Panama
+Paraguay,PRY,LAM,Paraguay
+Peru,PER,LAM,Peru
+Philippines,PHL,IDN,Philippines
+Poland,POL,EUE,Poland
+Portugal,PRT,EUM,Portugal
+Qatar,QAT,MEA,Qatar
+Romania,ROU,EUE,Romania
+Russia,RUS,RUS,Russian Federation
+Saudi Arabia,SAU,MEA,Saudi Arabia
+Senegal,SEN,AFW,Senegal
+Serbia,SRB,ENE,Serbia
+Singapore,SGP,ASE,Singapore
+Slovakia,SVK,EUE,Slovakia
+Slovenia,SVN,EUE,Slovenia
+South Africa,ZAF,AFZ,South Africa
+South Korea,KOR,SKT,Republic of Korea
+Spain,ESP,EUM,Spain
+Sri Lanka,LKA,ASO,Sri Lanka
+Sudan,SDN,AFE,Sudan
+Sweden,SWE,EUW,Sweden
+Switzerland,CHE,ENW,Switzerland
+Syria,SYR,MDA,Syrian Arab Republic
+"Taiwan, China",TWN,SKT,"Taiwan, Province of China"
+Tajikistan,TJK,ASC,Tajikistan
+Tanzania,TZA,AFE,United Republic of Tanzania
+Thailand,THA,ASE,Thailand
+Trinidad and Tobago,TTO,LAM,Trinidad and Tobago
+Tunisia,TUN,AFN,Tunisia
+Turkmenistan,TKM,ASC,Turkmenistan
+Türkiye,TUR,MDA,Turkey
+Ukraine,UKR,ENE,Ukraine
+United Arab Emirates,ARE,MEA,United Arab Emirates
+United Kingdom,GBR,ENW,United Kingdom of Great Britain and Northern Ireland
+United States,USA,USA,United States of America
+Uruguay,URY,LAM,Uruguay
+Uzbekistan,UZB,ASC,Uzbekistan
+Venezuela,VEN,LAM,Venezuela (Bolivarian Republic of)
+Viet Nam,VNM,IDN,Viet Nam
+Yemen,YEM,MEA,Yemen
