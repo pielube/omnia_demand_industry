@@ -1,0 +1,95 @@
+SourceGroup,SourceCountry,Production2019_kt,Production2020_kt,Availability2019,Availability2020,CountrySeriesEstimated,ValueEstimated2019,ValueEstimated2020
+European Union (28),Austria,7424,6765,reported,reported,no,no,no
+European Union (28),Belgium,7760,6119,reported,reported,no,no,no
+European Union (28),Bulgaria,566,484,reported,reported,no,no,no
+European Union (28),Croatia,69,45,reported,reported,no,no,no
+European Union (28),Czechia,4437,4465,reported,reported,no,no,no
+European Union (28),Germany,39627,35680,reported,reported,no,no,no
+European Union (28),Finland,3473,3498,reported,reported,no,no,no
+European Union (28),France,14450,11596,reported,reported,no,no,no
+European Union (28),Greece,1350,1408,reported,reported,no,no,no
+European Union (28),Hungary,1769,1513,reported,reported,no,no,no
+European Union (28),Italy,23190,20379,reported,reported,no,no,no
+European Union (28),Latvia,,,unavailable,unavailable,no,no,no
+European Union (28),Luxembourg,2119,1886,reported,reported,no,no,no
+European Union (28),Netherlands,6657,6054,reported,reported,no,no,no
+European Union (28),Poland,8956,7856,reported,reported,no,no,no
+European Union (28),Portugal,2033,2203,reported,reported,no,no,no
+European Union (28),Romania,3448,2790,reported,reported,no,no,no
+European Union (28),Slovakia,3931,3444,reported,reported,no,no,yes
+European Union (28),Slovenia,623,585,reported,reported,no,no,no
+European Union (28),Spain,13588,10998,reported,reported,no,no,no
+European Union (28),Sweden,4721,4409,reported,reported,no,no,no
+European Union (28),United Kingdom,7218,7086,reported,reported,no,no,no
+Other Europe,Albania,,,unavailable,unavailable,yes,no,no
+Other Europe,Bosnia-Herzegovina,801,759,reported,reported,no,no,no
+Other Europe,Macedonia,239,180,reported,reported,no,no,no
+Other Europe,Montenegro,50,20,reported,reported,yes,no,yes
+Other Europe,Norway,621,624,reported,reported,no,no,no
+Other Europe,Serbia,1929,1456,reported,reported,no,no,no
+Other Europe,Switzerland,1325,1175,reported,reported,no,no,yes
+Other Europe,Turkey,33743,35810,reported,reported,no,no,no
+C.I.S.,Azerbaijan,200,200,reported,reported,yes,no,yes
+C.I.S.,Belarus,2621,2482,reported,reported,no,no,no
+C.I.S.,Kazakhstan,4134,3892,reported,reported,no,no,no
+C.I.S.,Moldova,392,465,reported,reported,no,no,no
+C.I.S.,Russia,71729,71621,reported,reported,no,no,no
+C.I.S.,Ukraine,20848,20616,reported,reported,no,no,no
+C.I.S.,Uzbekistan,666,939,reported,reported,no,no,no
+North America,Canada,12897,10986,reported,reported,no,no,no
+North America,Cuba,230,185,reported,reported,no,no,no
+North America,El Salvador,102,82,reported,reported,no,no,no
+North America,Guatemala,306,243,reported,reported,no,no,no
+North America,Mexico,18387,16803,reported,reported,no,no,no
+North America,Trinidad and Tobago,,,unavailable,unavailable,no,no,no
+North America,United States,87761,72732,reported,reported,no,no,no
+South America,Argentina,4645,3651,reported,reported,no,no,no
+South America,Brazil,32569,31415,reported,reported,no,no,no
+South America,Chile,1133,1157,reported,reported,no,no,no
+South America,Colombia,1333,1149,reported,reported,no,no,no
+South America,Ecuador,607,482,reported,reported,no,no,no
+South America,Paraguay,26,23,reported,reported,no,no,no
+South America,Peru,1230,731,reported,reported,no,no,no
+South America,Uruguay,62,49,reported,reported,no,no,no
+South America,Venezuela,51,29,reported,reported,no,no,no
+Africa,Algeria,2400,4000,reported,reported,no,no,yes
+Africa,D.R. Congo,30,30,reported,reported,yes,no,yes
+Africa,Egypt,7257,8229,reported,reported,no,no,no
+Africa,Ghana,250,250,reported,reported,yes,no,yes
+Africa,Kenya,20,20,reported,reported,yes,no,yes
+Africa,Libya,606,495,reported,reported,no,no,no
+Africa,Mauritania,5,5,reported,reported,yes,no,yes
+Africa,Morocco,500,320,reported,reported,no,no,no
+Africa,Nigeria,100,100,reported,reported,yes,no,yes
+Africa,South Africa,6152,3877,reported,reported,no,no,no
+Africa,Tunisia,50,50,reported,reported,no,no,yes
+Africa,Uganda,30,30,reported,reported,yes,no,yes
+Middle East,Bahrain,700,700,reported,reported,yes,no,yes
+Middle East,Iran,25609,28990,reported,reported,no,no,no
+Middle East,Israel,300,300,reported,reported,yes,no,yes
+Middle East,Jordan,350,350,reported,reported,yes,no,yes
+Middle East,Kuwait,1270,1300,reported,reported,yes,no,yes
+Middle East,Oman,2000,2000,reported,reported,yes,no,yes
+Middle East,Qatar,2558,1218,reported,reported,no,no,no
+Middle East,Saudi Arabia,8191,7775,reported,reported,no,no,no
+Middle East,Syria,5,5,reported,reported,yes,no,yes
+Middle East,United Arab Emirates,3327,2722,reported,reported,no,no,no
+Asia,Bangladesh,5100,5500,reported,reported,yes,no,yes
+Asia,China,995419,1064767,reported,reported,no,no,no
+Asia,India,111351,100256,reported,reported,no,no,no
+Asia,Indonesia,8565,12871,reported,reported,no,no,no
+Asia,Japan,99284,83186,reported,reported,no,no,no
+Asia,D.P.R. Korea,1250,1250,reported,reported,yes,no,yes
+Asia,South Korea,71412,67079,reported,reported,no,no,no
+Asia,Malaysia,6948,6619,reported,reported,no,no,no
+Asia,Mongolia,50,50,reported,reported,yes,no,yes
+Asia,Myanmar,350,350,reported,reported,yes,no,yes
+Asia,Pakistan,3304,3803,reported,reported,yes,no,no
+Asia,Philippines,1915,892,reported,reported,no,no,no
+Asia,Singapore,766,406,reported,reported,no,no,no
+Asia,Sri Lanka,30,30,reported,reported,yes,no,yes
+Asia,"Taiwan, China",21954,20959,reported,reported,no,no,no
+Asia,Thailand,4246,4467,reported,reported,no,no,no
+Asia,Vietnam,17469,19900,reported,reported,no,no,no
+Oceania,Australia,5493,5490,reported,reported,no,no,no
+Oceania,New Zealand,667,586,reported,reported,no,no,no

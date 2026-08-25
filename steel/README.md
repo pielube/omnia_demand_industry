@@ -8,10 +8,11 @@ This folder builds a combined country-level steel dataset from SteelIQ-derived i
 - `maps/`: mapping files used by post-processing workflows.
 - `outputs/`: final generated outputs.
 - `data_extraction.py`: script used to combine demand, scrap, population, and per-capita rows.
-- `rebase_steel_production_worldsteel_2021_2025.py`: higher-precision rebase
-  using the World Steel 2021-2025 Excel export.
-- `plot_steel_production_old_vs_worldsteel_2021_2025.py`: comparison plot for
-  the original and Excel-rebased production paths.
+- `rebase_steel_production_omnia_2019_worldsteel_indexed.py`: separate
+  production variant that retains OMNIA 2019 levels and applies World Steel
+  regional production indices.
+- `plot_steel_production_old_vs_omnia_2019_worldsteel_indexed.py`: comparison
+  plot for the original and OMNIA-2019-anchored WSA-indexed paths.
 - `../shared_inputs/`: inputs shared with other sectors, including UN DESA population data.
 
 Most generated outputs are kept as `.csv`. The workbook in `outputs/` is the final OMNIA-facing steel production projection file.
@@ -26,6 +27,21 @@ Most generated outputs are kept as `.csv`. The workbook in `outputs/` is the fin
   Association export retrieved on 18 August 2026 and last updated on 28 July
   2026. The workbook does not print a unit; its magnitudes and agreement with
   the published World Steel totals establish the values as kt crude steel.
+- `inputs/Steel-Statistical-Yearbook-2021.pdf` is the archived World Steel
+  Association *Steel Statistical Yearbook 2021*, finalized in November 2021.
+  Table 1, printed pages 1-2 (PDF pages 5-6), reports crude steel production
+  in thousand metric tonnes. Its SHA-256 is
+  `e51e1919fbf694c8a40189c3d653e836ac9895161b6ab31ee8cd64b158998c36`.
+- `inputs/worldsteel_crude_steel_production_2019_2020.csv` extracts the 94
+  Table 1 country rows from that edition. Ninety-one countries have values in
+  both years; Albania, Latvia, and Trinidad and Tobago are unavailable. The
+  country sums differ from the published World totals by only 1 kt because of
+  rounding: 1,875,329 versus 1,875,330 kt in 2019 and 1,880,446 versus
+  1,880,445 kt in 2020. The CSV's SHA-256 is
+  `efcb4a17eedf48546f1a2bebc751aea74741b30f31d6d84aa39398b2d7e92b0e`.
+  The indexed variant deliberately uses this edition's revised 2019 column as
+  its WSA denominator, keeping the 2019 and 2020 index observations in one
+  source vintage.
 
 ## Processing Steps
 
@@ -36,43 +52,51 @@ Most generated outputs are kept as `.csv`. The workbook in `outputs/` is the fin
 5. Combine the original end-use rows, population rows, per-capita rows, and total scrap rows into one output file.
 6. Extract OMNIA-region steel production and scrap projections from the `OMNIA_Data` sheet of the final workbook using `extract_omnia_region_projections.py`.
 
-## World Steel 2021-2025 Excel Rebase
+## OMNIA-2019-Anchored World Steel Index
 
-The Excel export supports a higher-precision historical variant built directly
-from the original OMNIA projection:
+This separate production variant uses OMNIA for each region's calibrated 2019
+level and World Steel only for the 2019-2025 change. It does not overwrite the
+original projection, demand, scrap, or either upstream workbook.
+
+The regional World Steel aggregates use one fixed 87-country basket in every
+year. The basket is the ISO3 intersection of the 2019-2020 Statistical
+Yearbook extract and the 2021-2025 Excel export, restricted to countries with
+reported 2019 and 2020 values. Source-name assignments for the earlier
+vintage are recorded in `maps/worldsteel_2019_2020_country_map.csv` and
+checked against the shared OMNIA map. Explicit zeroes remain zero; unavailable
+values are excluded. The audit records basket membership, shared-map
+coverage, estimates, zeroes, and hashes. All 28 OMNIA regions have a positive
+2019 denominator and are rebased. Coverage confidence is based primarily on
+the basket's share of reported regional production, rather than its raw share
+of mapped country names; `AFE` is the only region below the 75% production
+coverage threshold in a reference vintage.
+
+For OMNIA region `r`, original OMNIA production `O`, fixed-basket World Steel
+production `W`, and new production `N`, the calculation is:
 
 ```text
-python steel/rebase_steel_production_worldsteel_2021_2025.py
+N[r, 2019] = O[r, 2019]
+N[r, y] = O[r, 2019] * W[r, y] / W[r, 2019]       # 2020-2025
+N[r, y] = N[r, 2025] * O[r, y] / O[r, 2025]       # 2026-2050
 ```
 
-The source-name-to-ISO3 assignments are recorded in
-`maps/worldsteel_2021_2025_country_map.csv` and checked against the shared
-OMNIA mapping. Fifteen regions have complete country coverage: `AFN`, `ANZ`,
-`BRA`, `CAN`, `CHL`, `EUE`, `IDN`, `IND`, `JPN`, `MEA`, `MEX`, `NIG`, `RUS`,
-`SKT`, and `USA`. `CHN` is included as the documented China Mainland
-exception; the source's Hong Kong row is explicitly zero.
+Thus 2025 is both WSA-indexed from OMNIA 2019 and the anchor for the future
+projection. The original post-2025 regional growth path is preserved,
+including the 2025-2026 handoff: `N[r, 2026] / N[r, 2025]` equals
+`O[r, 2026] / O[r, 2025]`. The audit reports the handoff change and checks this
+relationship explicitly. Regional series are not rescaled to force their sum
+to equal global steel demand.
 
-For each eligible region, 2019 retains its original value. The 2020 value is
-the linear midpoint between original 2019 and observed 2021. Values for
-2021-2025 are the exact sums of the World Steel country observations. From
-2026 onward, the original projection path is rescaled relative to observed
-2025:
+Generate the indexed projection, growth indices, and calculation audit with:
 
 ```text
-rebased[2020] = (original[2019] + observed[2021]) / 2
-rebased[year] = observed[2025] * original[year] / original[2025]  # 2026-2050
+python steel/rebase_steel_production_omnia_2019_worldsteel_indexed.py
 ```
 
-Explicit zeroes in the source are treated as reported zero production.
-Incomplete regions, demand, scrap, and the upstream projection workbook remain
-unchanged. The source's geographically unassigned `Others` row is validated
-against the World total but is not allocated, and no global rescaling is
-applied.
-
-Generate the corresponding comparison figure with:
+Generate the old-versus-new comparison figure with:
 
 ```text
-python steel/plot_steel_production_old_vs_worldsteel_2021_2025.py
+python steel/plot_steel_production_old_vs_omnia_2019_worldsteel_indexed.py
 ```
 
 ## Final Output
@@ -87,8 +111,8 @@ held constant through 2100.
 - `outputs/steel_production_omnia_growth_rates.csv`
 - `outputs/steel_scrap_omnia.csv`
 - `outputs/steel_scrap_omnia_growth_rates.csv`
-- `outputs/steel_production_omnia_worldsteel_2021_2025_rebased.csv`
-- `outputs/steel_production_omnia_worldsteel_2021_2025_rebased_growth_rates.csv`
-- `outputs/steel_production_worldsteel_2021_2025_rebase_audit.csv`
-- `outputs/figures/steel_production_omnia_old_vs_worldsteel_2021_2025_rebased_2019_2050.pdf`
-- `outputs/figures/steel_production_omnia_old_vs_worldsteel_2021_2025_rebased_2019_2050.png`
+- `outputs/steel_production_omnia_2019_anchored_worldsteel_indexed.csv`
+- `outputs/steel_production_omnia_2019_anchored_worldsteel_indexed_growth_rates.csv`
+- `outputs/steel_production_omnia_2019_anchored_worldsteel_indexed_audit.csv`
+- `outputs/figures/steel_production_omnia_old_vs_2019_anchored_worldsteel_indexed_2019_2050.pdf`
+- `outputs/figures/steel_production_omnia_old_vs_2019_anchored_worldsteel_indexed_2019_2050.png`

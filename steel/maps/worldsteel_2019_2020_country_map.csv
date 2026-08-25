@@ -1,0 +1,95 @@
+SourceCountry,ISO3,OMNIARegion,SharedMappingCountry
+Austria,AUT,EUW,Austria
+Belgium,BEL,EUW,Belgium
+Bulgaria,BGR,EUE,Bulgaria
+Croatia,HRV,EUE,Croatia
+Czechia,CZE,EUE,Czechia
+Germany,DEU,EUW,Germany
+Finland,FIN,EUW,Finland
+France,FRA,EUM,France
+Greece,GRC,EUM,Greece
+Hungary,HUN,EUE,Hungary
+Italy,ITA,EUM,Italy
+Latvia,LVA,EUE,Latvia
+Luxembourg,LUX,EUW,Luxembourg
+Netherlands,NLD,EUW,Netherlands
+Poland,POL,EUE,Poland
+Portugal,PRT,EUM,Portugal
+Romania,ROU,EUE,Romania
+Slovakia,SVK,EUE,Slovakia
+Slovenia,SVN,EUE,Slovenia
+Spain,ESP,EUM,Spain
+Sweden,SWE,EUW,Sweden
+United Kingdom,GBR,ENW,United Kingdom of Great Britain and Northern Ireland
+Albania,ALB,ENE,Albania
+Bosnia-Herzegovina,BIH,ENE,Bosnia and Herzegovina
+Macedonia,MKD,ENE,Republic of North Macedonia
+Montenegro,MNE,ENE,Montenegro
+Norway,NOR,ENW,Norway
+Serbia,SRB,ENE,Serbia
+Switzerland,CHE,ENW,Switzerland
+Turkey,TUR,MDA,Turkey
+Azerbaijan,AZE,ASC,Azerbaijan
+Belarus,BLR,ENE,Belarus
+Kazakhstan,KAZ,ASC,Kazakhstan
+Moldova,MDA,ENE,Republic of Moldova
+Russia,RUS,RUS,Russian Federation
+Ukraine,UKR,ENE,Ukraine
+Uzbekistan,UZB,ASC,Uzbekistan
+Canada,CAN,CAN,Canada
+Cuba,CUB,LAM,Cuba
+El Salvador,SLV,LAM,El Salvador
+Guatemala,GTM,LAM,Guatemala
+Mexico,MEX,MEX,Mexico
+Trinidad and Tobago,TTO,LAM,Trinidad and Tobago
+United States,USA,USA,United States of America
+Argentina,ARG,LAM,Argentina
+Brazil,BRA,BRA,Brazil
+Chile,CHL,CHL,Chile
+Colombia,COL,LAM,Colombia
+Ecuador,ECU,LAM,Ecuador
+Paraguay,PRY,LAM,Paraguay
+Peru,PER,LAM,Peru
+Uruguay,URY,LAM,Uruguay
+Venezuela,VEN,LAM,Venezuela (Bolivarian Republic of)
+Algeria,DZA,AFN,Algeria
+D.R. Congo,COD,AFW,Democratic Republic of the Congo
+Egypt,EGY,AFN,Egypt
+Ghana,GHA,AFW,Ghana
+Kenya,KEN,AFE,Kenya
+Libya,LBY,AFN,Libya
+Mauritania,MRT,AFW,Mauritania
+Morocco,MAR,AFN,Morocco
+Nigeria,NGA,NIG,Nigeria
+South Africa,ZAF,AFZ,South Africa
+Tunisia,TUN,AFN,Tunisia
+Uganda,UGA,AFE,Uganda
+Bahrain,BHR,MEA,Bahrain
+Iran,IRN,MEA,Iran (Islamic Republic of)
+Israel,ISR,MDA,Israel
+Jordan,JOR,MDA,Jordan
+Kuwait,KWT,MEA,Kuwait
+Oman,OMN,MEA,Oman
+Qatar,QAT,MEA,Qatar
+Saudi Arabia,SAU,MEA,Saudi Arabia
+Syria,SYR,MDA,Syrian Arab Republic
+United Arab Emirates,ARE,MEA,United Arab Emirates
+Bangladesh,BGD,ASO,Bangladesh
+China,CHN,CHN,China
+India,IND,IND,India
+Indonesia,IDN,IDN,Indonesia
+Japan,JPN,JPN,Japan
+D.P.R. Korea,PRK,ASE,Democratic People's Republic of Korea
+South Korea,KOR,SKT,Republic of Korea
+Malaysia,MYS,ASE,Malaysia
+Mongolia,MNG,ASC,Mongolia
+Myanmar,MMR,ASE,Myanmar
+Pakistan,PAK,ASO,Pakistan
+Philippines,PHL,IDN,Philippines
+Singapore,SGP,ASE,Singapore
+Sri Lanka,LKA,ASO,Sri Lanka
+"Taiwan, China",TWN,SKT,"Taiwan, Province of China"
+Thailand,THA,ASE,Thailand
+Vietnam,VNM,IDN,Viet Nam
+Australia,AUS,ANZ,Australia
+New Zealand,NZL,ANZ,New Zealand
