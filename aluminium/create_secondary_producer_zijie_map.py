@@ -19,6 +19,10 @@ OMNIA_REGION_FIRST_COLUMN = 6
 OMNIA_REGION_LAST_COLUMN = 34
 EXPECTED_OMNIA_WORLD_TOTAL_KT = 31_750.0
 
+# The unchanged INF workbook's 2019 totals include Taiwan in SKT. Allocate
+# these source totals before applying the current reporting-region mapping.
+INF_SOURCE_REGION_BY_ISO3 = {"TWN": "SKT"}
+
 
 COUNTRY_NAME_FIXES = {
     "Russia": "Russian Federation",
@@ -351,33 +355,65 @@ def allocate_omnia_totals(
     return output
 
 
-def main():
-    inf_data = pd.read_excel(INF_WORKBOOK_PATH, sheet_name="INF_Data", header=None)
-    omnia_mapping = pd.read_csv(OMNIA_MAPPING_PATH)
-
+def build_producer_map(inf_data, omnia_mapping):
     if "ZijieRegion" not in omnia_mapping.columns:
         raise ValueError(
             "OMNIA mapping is missing ZijieRegion. Run "
             "add_zijie_regions_to_omnia_mapping.py first."
         )
 
+    source_mapping = omnia_mapping.copy()
+    for iso3, source_region in INF_SOURCE_REGION_BY_ISO3.items():
+        source_mapping.loc[source_mapping["ISO3"].eq(iso3), "region"] = source_region
+
     omnia_totals = read_omnia_region_totals(inf_data)
     secondary_weights = map_secondary_weights(
         read_secondary_records(inf_data),
-        omnia_mapping,
+        source_mapping,
     )
     primary_weights = make_primary_fallback_weights()
+    source_region_lookup = source_mapping.drop_duplicates("ISO3").set_index("ISO3")["region"]
+    primary_weights["OMNIARegion"] = primary_weights["ISO3"].map(source_region_lookup)
+    if primary_weights["OMNIARegion"].isna().any():
+        raise ValueError("Primary fallback countries are missing from the source mapping.")
     output = allocate_omnia_totals(
         secondary_weights,
         primary_weights,
-        omnia_mapping,
+        source_mapping,
         omnia_totals,
+    )
+
+    output = output.rename(
+        columns={
+            "OMNIARegion": "SourceOMNIARegion",
+            "OMNIARegionTotal2019_kt": "SourceOMNIARegionTotal2019_kt",
+            "OMNIARegionShare": "SourceOMNIARegionShare",
+        }
+    )
+    region_lookup = omnia_mapping[["ISO3", "region"]].drop_duplicates().rename(
+        columns={"region": "OMNIARegion"}
+    )
+    output = output.merge(region_lookup, on="ISO3", how="left", validate="many_to_one")
+    if output["OMNIARegion"].isna().any():
+        raise ValueError("Secondary countries are missing from the current OMNIA mapping.")
+    output["OMNIARegionTotal2019_kt"] = output.groupby("OMNIARegion")[
+        "SecondaryProduction2019_kt"
+    ].transform("sum")
+    output["OMNIARegionShare"] = (
+        output["SecondaryProduction2019_kt"] / output["OMNIARegionTotal2019_kt"]
     )
 
     output = output.sort_values(
         ["ZijieRegion", "SecondaryProduction2019_kt"],
         ascending=[True, False],
     ).reset_index(drop=True)
+    return output
+
+
+def main():
+    inf_data = pd.read_excel(INF_WORKBOOK_PATH, sheet_name="INF_Data", header=None)
+    omnia_mapping = pd.read_csv(OMNIA_MAPPING_PATH)
+    output = build_producer_map(inf_data, omnia_mapping)
 
     output.to_csv(OUTPUT_CSV, index=False)
 

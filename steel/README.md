@@ -7,6 +7,10 @@ This folder builds a combined country-level steel dataset from SteelIQ-derived i
 - `inputs/`: sector-specific raw source files and smaller extracts copied from SteelIQ.
 - `maps/`: mapping files used by post-processing workflows.
 - `outputs/`: final generated outputs.
+- `outputs_skt_taiwan/`: preserved outputs before the WSA region change,
+  including the original indexed projection and comparison figures.
+- `outputs_before_workbook_update/`: checkpoint of the derived outputs before
+  refreshing them from the user-updated workbook, including comparison figures.
 - `data_extraction.py`: script used to combine demand, scrap, population, and per-capita rows.
 - `rebase_steel_production_omnia_2019_worldsteel_indexed.py`: separate
   production variant that retains OMNIA 2019 levels and applies World Steel
@@ -52,11 +56,41 @@ Most generated outputs are kept as `.csv`. The workbook in `outputs/` is the fin
 5. Combine the original end-use rows, population rows, per-capita rows, and total scrap rows into one output file.
 6. Extract OMNIA-region steel production and scrap projections from the `OMNIA_Data` sheet of the final workbook using `extract_omnia_region_projections.py`.
 
+After editing and saving the final workbook with recalculated formula values,
+refresh all dependent projections and figures in this order:
+
+```text
+python steel/extract_omnia_region_projections.py
+python steel/rebase_steel_production_omnia_2019_worldsteel_indexed.py
+python steel/plot_steel_production_old_vs_omnia_2019_worldsteel_indexed.py
+python plot_chn_skt_comparison.py
+```
+
+The extraction reads the workbook's saved values without modifying the workbook.
+It refreshes regional production, scrap, and their growth indices. The WSA
+variant then takes its 2019 anchors and post-2025 growth path from the refreshed
+production CSV. `steel_demand_and_scrap.csv` is an upstream country dataset
+built from the raw extracts; it does not depend on this final workbook.
+
 ## OMNIA-2019-Anchored World Steel Index
 
 This separate production variant uses OMNIA for each region's calibrated 2019
 level and World Steel only for the 2019-2025 change. It does not overwrite the
 original projection, demand, scrap, or either upstream workbook.
+
+The revised WSA definition assigns Taiwan (`TWN`) to CHN and only South Korea
+(`KOR`) to SKT. Both country maps use this definition for every WSA observation
+from 2019 through 2025, including the 2019 denominator. The OMNIA anchor is a
+separate input: its original 2019 regional values are kept exactly, with no
+Taiwan production transfer by the indexing script. The updated workbook retains
+CHN's 932.634463 Mt and SKT's 68.171605 Mt production anchors. The refreshed
+`outputs/steel_production_omnia.csv` supplies the post-2025 growth path.
+
+The user-updated workbook also assigns Taiwan to CHN in its regional
+aggregations. This changes CHN/SKT's standard production paths after 2019 and
+their scrap totals in every year, including 2019. Refreshing from this workbook
+leaves the WSA-indexed 2019-2025 levels unchanged and updates its 2026-2050
+growth path. Country inputs and the archived outputs are preserved.
 
 The regional World Steel aggregates use one fixed 87-country basket in every
 year. The basket is the ISO3 intersection of the 2019-2020 Statistical
@@ -71,7 +105,7 @@ the basket's share of reported regional production, rather than its raw share
 of mapped country names; `AFE` is the only region below the 75% production
 coverage threshold in a reference vintage.
 
-For OMNIA region `r`, original OMNIA production `O`, fixed-basket World Steel
+For OMNIA region `r`, workbook-derived OMNIA production `O`, fixed-basket World Steel
 production `W`, and new production `N`, the calculation is:
 
 ```text
@@ -81,7 +115,7 @@ N[r, y] = N[r, 2025] * O[r, y] / O[r, 2025]       # 2026-2050
 ```
 
 Thus 2025 is both WSA-indexed from OMNIA 2019 and the anchor for the future
-projection. The original post-2025 regional growth path is preserved,
+projection. The workbook's post-2025 regional growth path is preserved,
 including the 2025-2026 handoff: `N[r, 2026] / N[r, 2025]` equals
 `O[r, 2026] / O[r, 2025]`. The audit reports the handoff change and checks this
 relationship explicitly. Regional series are not rescaled to force their sum
@@ -93,11 +127,26 @@ Generate the indexed projection, growth indices, and calculation audit with:
 python steel/rebase_steel_production_omnia_2019_worldsteel_indexed.py
 ```
 
-Generate the old-versus-new comparison figure with:
+Generate the workbook-OMNIA-versus-revised-WSA comparison figure with:
 
 ```text
 python steel/plot_steel_production_old_vs_omnia_2019_worldsteel_indexed.py
 ```
+
+To compare the archived and revised WSA-indexed projections directly for CHN
+and SKT, with the same 2019 anchors, run:
+
+```text
+python plot_chn_skt_comparison.py
+```
+
+The steel production panel in `../comparison_figures/` reads the indexed CSV
+from `outputs_skt_taiwan/` and `outputs/`. Its two curves use different WSA
+regional indices and, from 2026 onward, the respective workbook growth paths.
+The scrap comparison uses the old and updated workbook regional scrap totals.
+The detailed audit
+records the revised baskets, denominators, index calculations, input hashes,
+and 2025-2026 handoff checks. The existing archive is preserved unchanged.
 
 ## Final Output
 

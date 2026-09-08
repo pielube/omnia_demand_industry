@@ -1,42 +1,42 @@
-Country_INF_Data,Country_OMNIA,ISO2,ISO3,OMNIARegion,ZijieRegion,PrimaryProduction2019_kt
-China,China,CN,CHN,CHN,China,35044
-Norway,Norway,NO,NOR,ENW,Europe,1400
-Iceland,Iceland,IS,ISL,ENW,Europe,845
-Germany,Germany,DE,DEU,EUW,Europe,550
-France,France,FR,FRA,EUM,Europe,430
-Romania,Romania,RO,ROU,EUE,Europe,280
-Spain,Spain,ES,ESP,EUM,Europe,240
-Slovakia,Slovakia,SK,SVK,EUE,Europe,220
-Greece,Greece,GR,GRC,EUM,Europe,180
-Netherlands,Netherlands,NL,NLD,EUW,Europe,150
-Sweden,Sweden,SE,SWE,EUW,Europe,120
-Slovenia,Slovenia,SI,SVN,EUE,Europe,80
-Turkey,Turkey,TR,TUR,MDA,Europe,80
-Montenegro,Montenegro,ME,MNE,ENE,Europe,60
-United Arab Emirates,United Arab Emirates,AE,ARE,MEA,Middle East,2600
-Bahrain,Bahrain,BH,BHR,MEA,Middle East,1365
-Saudi Arabia,Saudi Arabia,SA,SAU,MEA,Middle East,790
-Qatar,Qatar,QA,QAT,MEA,Middle East,627
-Oman,Oman,OM,OMN,MEA,Middle East,391
-Iran,Iran (Islamic Republic of),IR,IRN,MEA,Middle East,360
-Canada,Canada,CA,CAN,CAN,North America,2854
-United States,United States of America,US,USA,USA,North America,1090
-India,India,IN,IND,IND,Other Asia,3640
-Malaysia,Malaysia,MY,MYS,ASE,Other Asia,760
-Indonesia,Indonesia,ID,IDN,IDN,Other Asia,240
-Russia,Russian Federation,RU,RUS,RUS,Other main producer,3637
-Australia,Australia,AU,AUS,ANZ,Other main producer,1570
-South Africa,South Africa,ZA,ZAF,AFZ,Other main producer,717
-New Zealand,New Zealand,NZ,NZL,ANZ,Other main producer,351
-Egypt,Egypt,EG,EGY,AFN,Other main producer,300
-Kazakhstan,Kazakhstan,KZ,KAZ,ASC,Other main producer,260
-Cameroon,Cameroon,CM,CMR,AFW,Other main producer,70
-Azerbaijan,Azerbaijan,AZ,AZE,ASC,Other main producer,50
-Mozambique,Mozambique,MZ,MOZ,AFZ,Rest of World,565
-Tajikistan,Tajikistan,TJ,TJK,ASC,Rest of World,100
-Bosnia and Herzegovina,Bosnia and Herzegovina,BA,BIH,ENE,Rest of World,55
-Ghana,Ghana,GH,GHA,AFW,Rest of World,42
-Brazil,Brazil,BR,BRA,BRA,South America,650
-Argentina,Argentina,AR,ARG,LAM,South America,427
-Venezuela,Venezuela (Bolivarian Republic of),VE,VEN,LAM,South America,8
-United Kingdom,United Kingdom of Great Britain and Northern Ireland,GB,GBR,ENW,UK,48
+Country_INF_Data,Country_OMNIA,ISO2,ISO3,OMNIARegion,SourceOMNIARegion,ZijieRegion,PrimaryProduction2019_kt
+China,China,CN,CHN,CHN,CHN,China,35044
+Norway,Norway,NO,NOR,ENW,ENW,Europe,1400
+Iceland,Iceland,IS,ISL,ENW,ENW,Europe,845
+Germany,Germany,DE,DEU,EUW,EUW,Europe,550
+France,France,FR,FRA,EUM,EUM,Europe,430
+Romania,Romania,RO,ROU,EUE,EUE,Europe,280
+Spain,Spain,ES,ESP,EUM,EUM,Europe,240
+Slovakia,Slovakia,SK,SVK,EUE,EUE,Europe,220
+Greece,Greece,GR,GRC,EUM,EUM,Europe,180
+Netherlands,Netherlands,NL,NLD,EUW,EUW,Europe,150
+Sweden,Sweden,SE,SWE,EUW,EUW,Europe,120
+Slovenia,Slovenia,SI,SVN,EUE,EUE,Europe,80
+Turkey,Turkey,TR,TUR,MDA,MDA,Europe,80
+Montenegro,Montenegro,ME,MNE,ENE,ENE,Europe,60
+United Arab Emirates,United Arab Emirates,AE,ARE,MEA,MEA,Middle East,2600
+Bahrain,Bahrain,BH,BHR,MEA,MEA,Middle East,1365
+Saudi Arabia,Saudi Arabia,SA,SAU,MEA,MEA,Middle East,790
+Qatar,Qatar,QA,QAT,MEA,MEA,Middle East,627
+Oman,Oman,OM,OMN,MEA,MEA,Middle East,391
+Iran,Iran (Islamic Republic of),IR,IRN,MEA,MEA,Middle East,360
+Canada,Canada,CA,CAN,CAN,CAN,North America,2854
+United States,United States of America,US,USA,USA,USA,North America,1090
+India,India,IN,IND,IND,IND,Other Asia,3640
+Malaysia,Malaysia,MY,MYS,ASE,ASE,Other Asia,760
+Indonesia,Indonesia,ID,IDN,IDN,IDN,Other Asia,240
+Russia,Russian Federation,RU,RUS,RUS,RUS,Other main producer,3637
+Australia,Australia,AU,AUS,ANZ,ANZ,Other main producer,1570
+South Africa,South Africa,ZA,ZAF,AFZ,AFZ,Other main producer,717
+New Zealand,New Zealand,NZ,NZL,ANZ,ANZ,Other main producer,351
+Egypt,Egypt,EG,EGY,AFN,AFN,Other main producer,300
+Kazakhstan,Kazakhstan,KZ,KAZ,ASC,ASC,Other main producer,260
+Cameroon,Cameroon,CM,CMR,AFW,AFW,Other main producer,70
+Azerbaijan,Azerbaijan,AZ,AZE,ASC,ASC,Other main producer,50
+Mozambique,Mozambique,MZ,MOZ,AFZ,AFZ,Rest of World,565
+Tajikistan,Tajikistan,TJ,TJK,ASC,ASC,Rest of World,100
+Bosnia and Herzegovina,Bosnia and Herzegovina,BA,BIH,ENE,ENE,Rest of World,55
+Ghana,Ghana,GH,GHA,AFW,AFW,Rest of World,42
+Brazil,Brazil,BR,BRA,BRA,BRA,South America,650
+Argentina,Argentina,AR,ARG,LAM,LAM,South America,427
+Venezuela,Venezuela (Bolivarian Republic of),VE,VEN,LAM,LAM,South America,8
+United Kingdom,United Kingdom of Great Britain and Northern Ireland,GB,GBR,ENW,ENW,UK,48

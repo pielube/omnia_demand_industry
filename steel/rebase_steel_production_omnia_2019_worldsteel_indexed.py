@@ -1,7 +1,13 @@
 """Index OMNIA steel production from its 2019 level using World Steel data.
 
 This workflow creates a separate projection variant.  It never modifies the
-original OMNIA production projection or the upstream Excel workbook.
+workbook-derived OMNIA production projection or the upstream Excel workbook.
+
+The input OMNIA 2019 levels and future growth path are preserved by indexing.
+Refresh that input from the workbook before rerunning this script. The WSA
+region definitions assign Taiwan to CHN and only South Korea to SKT in every
+observation year, including the WSA 2019 index denominator. This changes the
+WSA growth indices without reallocating the separate OMNIA 2019 anchors.
 
 For each OMNIA region ``r`` the requested calculation is::
 
@@ -70,7 +76,7 @@ EXPECTED_RECENT_SOURCE_SHA256 = (
     "743a06460abf0720b8562b098fab8a18376a9d3e9cdc42bef77f07934fc3fa16"
 )
 EXPECTED_RECENT_MAP_SHA256 = (
-    "5dee682785725cb5d728ee38f0900e3966986631f4982183c240e3012959a4e9"
+    "fda7fbc6581e65eecddb33351ca5cfdb09a6d7aa8f728415b9a648bda7599c39"
 )
 EXPECTED_RECENT_SOURCE_DATA_ROWS = 125
 EXPECTED_RECENT_COUNTRIES = 120
@@ -96,7 +102,7 @@ EXPECTED_HISTORICAL_SOURCE_SHA256 = (
     "efcb4a17eedf48546f1a2bebc751aea74741b30f31d6d84aa39398b2d7e92b0e"
 )
 EXPECTED_HISTORICAL_MAP_SHA256 = (
-    "454b4b8a0029133e5b6a9c24ed7ddaafa087d31f97dab2004e54096581184b3b"
+    "09ba536c034ad7f289046b268868191031e47658c6eec72f06620fbc06538849"
 )
 EXPECTED_HISTORICAL_PDF_SHA256 = (
     "e51e1919fbf694c8a40189c3d653e836ac9895161b6ab31ee8cd64b158998c36"
@@ -599,9 +605,7 @@ def make_regional_observations(
             min(production_coverages) if production_coverages else np.nan
         )
 
-        if region == "CHN":
-            coverage_basis = "effective_mainland_china"
-        elif basket_members == all_shared_members:
+        if basket_members == all_shared_members:
             coverage_basis = "complete_shared_mapping"
         else:
             coverage_basis = "fixed_partial_common_country_basket"

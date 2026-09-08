@@ -2,6 +2,10 @@ from pathlib import Path
 
 import pandas as pd
 
+from create_secondary_producer_zijie_map import (
+    build_producer_map,
+    read_omnia_region_totals,
+)
 from secondary_2024_allocation import read_secondary_2024_allocation_weights
 
 
@@ -139,11 +143,13 @@ def read_omnia_2019_region_totals():
         sheet_name="INF_Data",
         header=None,
     )
-    region_codes = inf_data.iloc[226, 6:34].tolist()
-    totals_kt = (
-        pd.to_numeric(inf_data.iloc[231, 6:34], errors="raise") * 1000
-    ).tolist()
-    return dict(zip(region_codes, totals_kt))
+    mapping = pd.read_csv(OMNIA_MAPPING_PATH)
+    # Independently rebuild the source allocations: simply applying unchanged
+    # workbook totals to revised regions would alter physical country baselines.
+    allocated = build_producer_map(inf_data, mapping)
+    source_regions = read_omnia_region_totals(inf_data)["OMNIARegion"]
+    totals = allocated.groupby("OMNIARegion")["SecondaryProduction2019_kt"].sum()
+    return totals.reindex(source_regions, fill_value=0).to_dict()
 
 
 def build_projection(scenario_sheet=SCENARIO_SHEET):

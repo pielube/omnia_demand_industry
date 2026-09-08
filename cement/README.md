@@ -8,6 +8,8 @@ projections using income elasticities and WCA regional totals.
 - `inputs/`: cement-specific WCA source data and documentation.
 - `maps/`: the WCA country-region mapping used to constrain projections.
 - `outputs/`: the country projection and OMNIA absolute and growth-rate CSVs.
+- `outputs_skt_taiwan/`: preserved outputs from the former OMNIA definition,
+  where SKT included South Korea and Taiwan.
 - `../shared_inputs/`: population, SSP2 GDP projections, and the OMNIA
   country-region mapping.
 
@@ -46,6 +48,13 @@ Aggregate the same country projection to OMNIA regions:
 ```text
 python cement/create_cement_omnia.py
 ```
+
+The current OMNIA mapping assigns Taiwan (`TWN`) to `CHN` and South Korea
+(`KOR`) to `SKT`. This change only requires rerunning the aggregation above:
+the country projections, WCA regional assignments, and WCA calibration are
+independent of OMNIA geography. Country output is therefore identical to the
+archived version; Taiwan's annual production moves from SKT to CHN, and the
+regional growth indices are recalculated from the revised 2019 totals.
 
 ## Final Outputs
 

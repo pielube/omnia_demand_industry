@@ -1,3 +1,4 @@
+import argparse
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -62,12 +63,22 @@ def validate_pair(old, new, metric):
     return new_regions
 
 
-def plot_metric(metric, title, output_dir=FIGURES_DIR, output_format="pdf"):
+def plot_metric(
+    metric,
+    title,
+    output_dir=FIGURES_DIR,
+    output_format="pdf",
+    old_baseline_dir=OLD_BASELINE_DIR,
+    new_baseline_dir=NEW_BASELINE_DIR,
+    comparison_name="old_vs_new",
+    old_label="Old baseline",
+    new_label="New baseline",
+):
     if output_format not in {"pdf", "png"}:
         raise ValueError(f"Unsupported output format: {output_format}")
     filename = f"aluminium_{metric}_omnia.csv"
-    old = read_omnia_projection(OLD_BASELINE_DIR / filename)
-    new = read_omnia_projection(NEW_BASELINE_DIR / filename)
+    old = read_omnia_projection(Path(old_baseline_dir) / filename)
+    new = read_omnia_projection(Path(new_baseline_dir) / filename)
     regions = validate_pair(old, new, metric)
 
     figure, axes = plt.subplots(
@@ -89,7 +100,7 @@ def plot_metric(metric, title, output_dir=FIGURES_DIR, output_format="pdf"):
             new_values,
             color="#0072B2",
             linewidth=2.0,
-            label="New baseline",
+            label=new_label,
             zorder=2,
         )
         old_line, = axis.plot(
@@ -98,7 +109,7 @@ def plot_metric(metric, title, output_dir=FIGURES_DIR, output_format="pdf"):
             color="#D55E00",
             linewidth=1.8,
             linestyle="--",
-            label="Old baseline",
+            label=old_label,
             zorder=3,
         )
 
@@ -116,14 +127,14 @@ def plot_metric(metric, title, output_dir=FIGURES_DIR, output_format="pdf"):
         axis.tick_params(labelsize=8)
 
     figure.suptitle(
-        f"{title}: new versus old baseline by OMNIA region",
+        f"{title}: {new_label} versus {old_label} by OMNIA region",
         fontsize=17,
         fontweight="bold",
         y=0.995,
     )
     figure.legend(
         handles=[new_line, old_line],
-        labels=["New baseline", "Old baseline"],
+        labels=[new_label, old_label],
         loc="upper center",
         bbox_to_anchor=(0.5, 0.958),
         ncol=2,
@@ -146,7 +157,7 @@ def plot_metric(metric, title, output_dir=FIGURES_DIR, output_format="pdf"):
     output_path = (
         output_dir
         / (
-            f"aluminium_{metric}_omnia_old_vs_new_2019_2050_7x4."
+            f"aluminium_{metric}_omnia_{comparison_name}_2019_2050_7x4."
             f"{output_format}"
         )
     )
@@ -156,8 +167,29 @@ def plot_metric(metric, title, output_dir=FIGURES_DIR, output_format="pdf"):
 
 
 def main():
-    for metric, title in METRICS.items():
-        output_path = plot_metric(metric, title)
+    parser = argparse.ArgumentParser(description="Compare aluminium OMNIA baselines.")
+    parser.add_argument("--old-baseline-dir", type=Path, default=OLD_BASELINE_DIR)
+    parser.add_argument("--new-baseline-dir", type=Path, default=NEW_BASELINE_DIR)
+    parser.add_argument("--output-dir", type=Path, default=FIGURES_DIR)
+    parser.add_argument("--comparison-name", default="old_vs_new")
+    parser.add_argument("--old-label", default="Old baseline")
+    parser.add_argument("--new-label", default="New baseline")
+    parser.add_argument("--include-total", action="store_true")
+    args = parser.parse_args()
+    metrics = dict(METRICS)
+    if args.include_total:
+        metrics["total"] = "Total aluminium production"
+    for metric, title in metrics.items():
+        output_path = plot_metric(
+            metric,
+            title,
+            output_dir=args.output_dir,
+            old_baseline_dir=args.old_baseline_dir,
+            new_baseline_dir=args.new_baseline_dir,
+            comparison_name=args.comparison_name,
+            old_label=args.old_label,
+            new_label=args.new_label,
+        )
         print(f"Saved: {output_path}")
 
 

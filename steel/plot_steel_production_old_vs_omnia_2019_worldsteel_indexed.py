@@ -48,12 +48,12 @@ REGION_LABELS = {
     "RUS": "Russian Federation",
     "ASC": "Central Asia",
     "ASE": "Southeast Asia",
-    "CHN": "China Mainland",
+    "CHN": "China, Hong Kong, Macao and Taiwan",
     "IDN": "Indonesia, Philippines, Viet Nam",
     "IND": "India",
     "ASO": "South Asia",
     "JPN": "Japan",
-    "SKT": "South Korea and Taiwan",
+    "SKT": "South Korea",
     "ANZ": "Australia and New Zealand",
     "USA": "United States",
     "CAN": "Canada",
@@ -361,14 +361,14 @@ def plot_comparison(
             color=ORIGINAL_COLOR,
             linestyle="--",
             linewidth=1.8,
-            label="Original OMNIA projection",
+            label="Workbook OMNIA projection",
         ),
         Line2D(
             [0],
             [0],
             color=INDEXED_COLOR,
             linewidth=2.2,
-            label="OMNIA-2019-anchored projection",
+            label="WSA index (Taiwan in CHN)",
         ),
         Line2D(
             [0],
@@ -393,7 +393,7 @@ def plot_comparison(
     ]
 
     figure.suptitle(
-        "Steel production: original vs OMNIA-2019-anchored WSA index",
+        "Steel production: workbook OMNIA vs revised WSA index",
         fontsize=19,
         fontweight="bold",
         y=0.991,
@@ -401,8 +401,8 @@ def plot_comparison(
     figure.text(
         0.5,
         0.976,
-        "2019 retains OMNIA levels; 2020-2025 follow WSA changes; "
-        "2026 onward preserves original post-2025 growth",
+        "Original OMNIA 2019 anchors retained; WSA 2019-2025 includes Taiwan in CHN; "
+        "2026 onward follows updated workbook growth from revised 2025",
         ha="center",
         fontsize=10.8,
         color="#374151",

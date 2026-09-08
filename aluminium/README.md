@@ -12,6 +12,9 @@ projections for primary production, secondary production, and scrap.
 - `outputs/`: scenario subdirectories containing country projections,
   OMNIA-region projections, and growth-rate CSVs for primary, secondary, scrap,
   and total aluminium production.
+- `outputs_skt_taiwan/`: unchanged outputs from before Taiwan moved from SKT
+  to CHN, including the original comparison figures.
+- `outputs_old/`: the earlier methodology archive, retained separately.
 - `../shared_inputs/`: central reference inputs, including the OMNIA
   country-region mapping and INF workbook.
 
@@ -25,12 +28,20 @@ python aluminium/create_primary_producer_zijie_map.py
 python aluminium/create_secondary_producer_zijie_map.py
 ```
 
-The secondary producer map uses the 2019 OMNIA-region values in
+The secondary producer map uses the 2019 source-region values in
 `INF_Data!G232:AH232` as binding totals (31.75 Mt globally). Available
 secondary-country observations provide within-region allocation weights.
 Where those observations are absent, OMNIA primary-production country shares
 are used; a single-country region is assigned directly. Zijie data is not used
 to construct the 2019 secondary baseline.
+
+The source workbook retains its original geography, with Taiwan in SKT.
+Country baselines are allocated within those source regions first, then
+aggregated using the current shared mapping: SKT contains South Korea only,
+and Taiwan belongs to CHN. The producer maps retain source-region metadata;
+the secondary map reports both source and current totals and shares. This
+preserves country production and global totals. Taiwan remains in Zijie's
+`Other Asia` region, since that independent scenario geography has not changed.
 
 The `build_*_zijie_baseline.py` modules construct the country baselines in
 memory. The secondary baseline is OMNIA-controlled in 2019; the later modeled
@@ -38,6 +49,21 @@ years use Zijie's regional trajectories. These are support modules for the
 final workflows and do not write legacy projection files.
 
 ## Final Workflows
+
+To rebuild both producer maps, all three scenarios (including total production),
+and the comparison figures in the correct order, run:
+
+```text
+python aluminium/regenerate_aluminium_outputs.py
+```
+
+This command leaves both archives unchanged. The original figures continue to
+compare against `outputs_old/baseline/`; additional figures named
+`*_skt_taiwan_vs_corrected_*` compare the new baseline against
+`outputs_skt_taiwan/baseline/`, including total production.
+
+Run `python aluminium/test_region_allocation.py` to check that reassigning
+Taiwan preserves country baselines even when it has positive 2019 production.
 
 Run the BGS-aligned primary workflow:
 

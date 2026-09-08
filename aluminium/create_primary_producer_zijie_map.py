@@ -62,15 +62,18 @@ def main():
         .rename(
             columns={
                 "country_OMNIA": "CountryForMatch",
-                "region": "OMNIARegion_INF_Data",
+                "region": "OMNIARegion",
             }
         )
     )
 
     output = primary.merge(
         country_lookup,
-        on=["CountryForMatch", "OMNIARegion_INF_Data"],
+        # The workbook retains its original region definitions. Match physical
+        # countries independently of those source labels, then use today's map.
+        on="CountryForMatch",
         how="left",
+        validate="many_to_one",
     )
 
     missing = output[output["ZijieRegion"].isna()]
@@ -86,6 +89,7 @@ def main():
             "CountryForMatch",
             "ISO2",
             "ISO3",
+            "OMNIARegion",
             "OMNIARegion_INF_Data",
             "ZijieRegion",
             "PrimaryProduction2019_kt",
@@ -93,7 +97,7 @@ def main():
     ].rename(
         columns={
             "CountryForMatch": "Country_OMNIA",
-            "OMNIARegion_INF_Data": "OMNIARegion",
+            "OMNIARegion_INF_Data": "SourceOMNIARegion",
         }
     )
 
