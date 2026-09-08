@@ -9,7 +9,7 @@ import pandas as pd
 
 BASE_DIR = Path(__file__).resolve().parent
 NEW_BASELINE_DIR = BASE_DIR / "outputs" / "baseline"
-OLD_BASELINE_DIR = BASE_DIR / "outputs_old" / "baseline"
+OLD_BASELINE_DIR = BASE_DIR / "ARCHIVED_outputs_old" / "baseline"
 FIGURES_DIR = BASE_DIR / "outputs" / "figures"
 
 FIRST_YEAR = 2019

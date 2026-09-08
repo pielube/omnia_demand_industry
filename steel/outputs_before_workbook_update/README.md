@@ -1,1 +1,0 @@
-These derived outputs were preserved immediately before regeneration from the user-updated steel workbook. They include the revised WSA region indices but still use the preceding workbook production and scrap tables. The original Taiwan-in-SKT outputs remain in ../outputs_skt_taiwan/. The updated workbook itself is not included in this checkpoint.

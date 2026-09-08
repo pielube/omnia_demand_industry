@@ -7,9 +7,9 @@ This folder builds a combined country-level steel dataset from SteelIQ-derived i
 - `inputs/`: sector-specific raw source files and smaller extracts copied from SteelIQ.
 - `maps/`: mapping files used by post-processing workflows.
 - `outputs/`: final generated outputs.
-- `outputs_skt_taiwan/`: preserved outputs before the WSA region change,
+- `ARCHIVED_outputs_skt_taiwan/`: preserved outputs before the WSA region change,
   including the original indexed projection and comparison figures.
-- `outputs_before_workbook_update/`: checkpoint of the derived outputs before
+- `ARCHIVED_outputs_before_workbook_update/`: checkpoint of the derived outputs before
   refreshing them from the user-updated workbook, including comparison figures.
 - `data_extraction.py`: script used to combine demand, scrap, population, and per-capita rows.
 - `rebase_steel_production_omnia_2019_worldsteel_indexed.py`: separate
@@ -141,7 +141,7 @@ python plot_chn_skt_comparison.py
 ```
 
 The steel production panel in `../comparison_figures/` reads the indexed CSV
-from `outputs_skt_taiwan/` and `outputs/`. Its two curves use different WSA
+from `ARCHIVED_outputs_skt_taiwan/` and `outputs/`. Its two curves use different WSA
 regional indices and, from 2026 onward, the respective workbook growth paths.
 The scrap comparison uses the old and updated workbook regional scrap totals.
 The detailed audit

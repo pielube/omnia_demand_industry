@@ -12,9 +12,9 @@ projections for primary production, secondary production, and scrap.
 - `outputs/`: scenario subdirectories containing country projections,
   OMNIA-region projections, and growth-rate CSVs for primary, secondary, scrap,
   and total aluminium production.
-- `outputs_skt_taiwan/`: unchanged outputs from before Taiwan moved from SKT
+- `ARCHIVED_outputs_skt_taiwan/`: unchanged outputs from before Taiwan moved from SKT
   to CHN, including the original comparison figures.
-- `outputs_old/`: the earlier methodology archive, retained separately.
+- `ARCHIVED_outputs_old/`: the earlier methodology archive, retained separately.
 - `../shared_inputs/`: central reference inputs, including the OMNIA
   country-region mapping and INF workbook.
 
@@ -58,9 +58,9 @@ python aluminium/regenerate_aluminium_outputs.py
 ```
 
 This command leaves both archives unchanged. The original figures continue to
-compare against `outputs_old/baseline/`; additional figures named
+compare against `ARCHIVED_outputs_old/baseline/`; additional figures named
 `*_skt_taiwan_vs_corrected_*` compare the new baseline against
-`outputs_skt_taiwan/baseline/`, including total production.
+`ARCHIVED_outputs_skt_taiwan/baseline/`, including total production.
 
 Run `python aluminium/test_region_allocation.py` to check that reassigning
 Taiwan preserves country baselines even when it has positive 2019 production.

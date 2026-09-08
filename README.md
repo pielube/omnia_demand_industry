@@ -15,7 +15,7 @@ Each sector folder follows the same basic layout:
 - `inputs/`: raw source files.
 - `maps/`: mapping or allocation files used by the sector workflows.
 - `outputs/`: generated final datasets.
-- `outputs_skt_taiwan/`: preserved outputs from before the Taiwan region
+- `ARCHIVED_outputs_skt_taiwan/`: preserved outputs from before the Taiwan region
   reassignment, including the existing workbooks and figures.
 - `README.md`: brief sector-specific workflow notes.
 
@@ -30,7 +30,7 @@ OMNIA-facing workbook.
 The shared country-region mapping now assigns only South Korea (`KOR`) to
 `SKT`; Taiwan (`TWN`) belongs to `CHN`, alongside its existing members. Current
 projections are in each sector's `outputs/` directory. Compare the same relative
-filenames in `outputs_skt_taiwan/` for the previous region definition.
+filenames in `ARCHIVED_outputs_skt_taiwan/` for the previous region definition.
 
 This is an OMNIA geography change. The source WCA and Zijie regional definitions
 remain as supplied (Taiwan remains in Zijie's `Other Asia`). Aluminium source
@@ -40,5 +40,5 @@ For steel, the updated workbook supplies regional production and scrap under
 the revised geography. The WSA-indexed production variant preserves its OMNIA
 2019 anchors and applies the workbook's post-2025 growth from its indexed
 2025 level. Scrap includes Taiwan in CHN throughout, including 2019.
-The existing `aluminium/outputs_old/` directory retains its earlier comparison
+The existing `aluminium/ARCHIVED_outputs_old/` directory retains its earlier comparison
 baseline and is separate from this archive.

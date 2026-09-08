@@ -4,7 +4,7 @@
 side by side. Individual figures are also available as PNGs. Each panel shows
 only the old and new annual series in Mt, covering 2019-2050.
 
-- Old: each sector's `outputs_skt_taiwan/` archive (Taiwan in SKT).
+- Old: each sector's `ARCHIVED_outputs_skt_taiwan/` archive (Taiwan in SKT).
 - New: each sector's `outputs/` directory (Taiwan in CHN).
 - Aluminium: baseline primary, secondary, and scrap projections.
 - Cement: production, which equals demand in this workflow.

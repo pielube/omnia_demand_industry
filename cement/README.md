@@ -8,7 +8,7 @@ projections using income elasticities and WCA regional totals.
 - `inputs/`: cement-specific WCA source data and documentation.
 - `maps/`: the WCA country-region mapping used to constrain projections.
 - `outputs/`: the country projection and OMNIA absolute and growth-rate CSVs.
-- `outputs_skt_taiwan/`: preserved outputs from the former OMNIA definition,
+- `ARCHIVED_outputs_skt_taiwan/`: preserved outputs from the former OMNIA definition,
   where SKT included South Korea and Taiwan.
 - `../shared_inputs/`: population, SSP2 GDP projections, and the OMNIA
   country-region mapping.

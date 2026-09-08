@@ -25,7 +25,7 @@ def main():
     for metric, title in METRICS.items():
         print(f"Saved: {plot_metric(metric, title)}")
 
-    region_archive = BASE_DIR / "outputs_skt_taiwan" / "baseline"
+    region_archive = BASE_DIR / "ARCHIVED_outputs_skt_taiwan" / "baseline"
     if region_archive.is_dir():
         for metric, title in {
             **METRICS,

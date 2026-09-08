@@ -41,7 +41,7 @@ def main():
     pdf_path = OUTPUT_DIR / "chn_skt_old_vs_new.pdf"
     with PdfPages(pdf_path) as pdf:
         for name, title, sector, filename in SERIES:
-            old = read_projection(ROOT / sector / "outputs_skt_taiwan" / filename)
+            old = read_projection(ROOT / sector / "ARCHIVED_outputs_skt_taiwan" / filename)
             new = read_projection(ROOT / sector / "outputs" / filename)
             fig, axes = plt.subplots(1, 2, figsize=(10, 3.8), layout="constrained")
             fig.suptitle(title, fontsize=14)
