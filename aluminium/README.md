@@ -129,6 +129,23 @@ The `aluminium_total_*` files sum primary and secondary aluminium ingot
 production at country level, then use the same OMNIA aggregation and
 milestone-year growth-rate formats as the individual metrics.
 
+Each scenario also contains `aluminium_{primary,secondary,scrap,total}_tiam.csv`
+and matching `_tiam_growth_rates.csv` files. These aggregate the corresponding
+country projections directly using the shared TIAM mapping and documented
+supplements, preserving the annual country and global totals. Absolute files
+use `TIAMRegion` as their region column; the units and year ranges match the
+OMNIA files. Growth indices are computed from the TIAM totals with 2019 equal
+to 1 and the 2050 index held constant through 2100.
+
+After refreshing the country projections, regenerate TIAM outputs for all
+three aluminium scenarios and cement from the repository root:
+
+```text
+python create_tiam_country_outputs.py
+```
+
+See `../shared_inputs/README.md` for mapping corrections and coverage additions.
+
 Primary-production history is sourced from the British Geological Survey,
 *World Mineral Production 2020-24*. BGS does not provide equivalent
 country-level secondary aluminium or scrap tables in that publication.

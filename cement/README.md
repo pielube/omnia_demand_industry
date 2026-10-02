@@ -63,3 +63,21 @@ regional growth indices are recalculated from the revised 2019 totals.
 - `outputs/cement_omnia_growth_rates.csv`: transposed milestone-year index with
   OMNIA regions as columns, 2019 equal to 1, and 2050 held constant through
   2100.
+- `outputs/cement_tiam.csv`: the same country cement-production dataset
+  aggregated to the 16 TIAM regions, in kt, 2019-2050, with a `TIAMRegion`
+  column.
+- `outputs/cement_tiam_growth_rates.csv`: recomputed TIAM milestone-year
+  indices, with 2019 equal to 1 and 2050 held constant through 2100.
+
+Regenerate the TIAM files after refreshing `cement_country.csv`, using the
+shared TIAM mapping and documented supplements:
+
+```text
+python create_tiam_country_outputs.py
+```
+
+Run this from the repository root. It also refreshes the aluminium TIAM files.
+Only cement-production rows are aggregated; population rows are excluded.
+Annual country and global production totals are preserved. See
+`../shared_inputs/README.md` for approved mapping corrections and the
+supplemental territory assignments needed to cover all cement country rows.

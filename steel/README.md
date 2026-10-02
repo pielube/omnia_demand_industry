@@ -150,6 +150,90 @@ and 2025-2026 handoff checks. The existing archive is preserved unchanged.
 
 ## Final Output
 
+### TIAM workbook and regional outputs
+
+`outputs/Steel_demand_and_scrap_projections [TIAM].xlsx` applies the source
+workbook's formula method to the 16 TIAM regions. It retains the country demand,
+population, and scrap history, rebuilds the `Data` aggregation and
+`CountryCodes` lookups, and replaces `OMNIA_Data` with `TIAM_Data`. It includes
+the TIAM mapping, country production-calibration inputs, and method notes.
+Country joins use the corrected shared TIAM map and its documented supplements.
+
+The source calculation is replayed and checked against every saved regional
+value for 2019-2060 before generating the TIAM workbook. The formula method is:
+
+```text
+per_capita[r, y] = demand[r, y] / population[r, y] * 1000  # kg/person
+CAGR[r] = (per_capita[r, 2050] / per_capita[r, 2019]) ** (1 / 31) - 1
+production[r, 2019] = calibration[r] / sum(calibration) * global_demand[2019]
+production[r, y] = production[r, y-1] * (1 + CAGR[r] * adjustment[r])
+production[CHI, y] = global_demand[y] - sum(other_regions_production[y])
+```
+
+The non-CHI production formula uses one constant growth rate throughout the
+projection. Scrap is summed directly from countries. Population is in
+thousands, demand and exported production/scrap are kt, and the workbook's
+production table is Mt. The workbook covers 2019-2060; annual CSVs cover
+2019-2050, with milestone indices held at 2050 values through 2100.
+
+The 2019 calibration requires an explicit input choice: the original workbook
+has only 28 hardcoded OMNIA calibration values, copied from the INF workbook's
+regional PIOLab inputs. Its cited country source
+`OMNIA_steel_production_2017_and_2019.xlsx` is absent. The TIAM workflow therefore
+uses the reviewed World Steel Statistical Yearbook 2021's reported 2019 country
+production, aggregating it directly into TIAM before normalizing to global
+2019 demand. This gives traceable TIAM starting shares; it introduces a new
+calibration input while reproducing the source formula method. The 91 reported
+country values sum to 1,875,329 kt; unavailable observations are excluded.
+
+The source workbook's adjustment factors are 1 or 1.1. TIAM factors are their
+2019-production-weighted averages over the countries in each TIAM region.
+This keeps the existing choices for regions whose member countries share one
+factor and gives a transparent weighted factor for mixed regions (FSU).
+CHI's production is a residual, so its growth adjustment is not applied.
+These inputs and country weights are visible in `Production_Calibration` and
+`TIAM_Data!AW99:BE115` in the new workbook.
+
+Rebuild the workbook and all seven TIAM CSVs:
+
+```text
+python steel/create_tiam_steel_outputs.py --calibration-method worldsteel
+```
+
+Python needs the existing pandas, NumPy, and openpyxl dependencies, plus
+Microsoft Excel and pywin32 for saving recalculated Excel formula values. The
+script uses a separate hidden Excel instance, checks the recalculated workbook
+against its independent Python calculation, and extracts production and scrap
+from the saved workbook. It validates all CSV calculations before writing them.
+
+The World Steel indexed variant uses the same reviewed fixed 87-country basket
+as the OMNIA variant, regrouped into TIAM before calculating regional indices.
+It retains the TIAM workbook's 2019 anchors, indexes 2020-2025 using the TIAM WSA
+series, and preserves the TIAM workbook's growth from the indexed 2025 level
+through 2050. Its audit records membership, coverage, source hashes, and the
+2025-2026 handoff. Unlike the workbook's residual-balanced production series,
+the indexed variant's global total follows the regional indices independently.
+
+To refresh only the indexed variant from an existing TIAM production CSV:
+
+```text
+python steel/rebase_steel_production_tiam_2019_worldsteel_indexed.py
+```
+
+The TIAM regional CSVs are:
+
+- `outputs/steel_production_tiam.csv`
+- `outputs/steel_production_tiam_growth_rates.csv`
+- `outputs/steel_scrap_tiam.csv`
+- `outputs/steel_scrap_tiam_growth_rates.csv`
+- `outputs/steel_production_tiam_2019_anchored_worldsteel_indexed.csv`
+- `outputs/steel_production_tiam_2019_anchored_worldsteel_indexed_growth_rates.csv`
+- `outputs/steel_production_tiam_2019_anchored_worldsteel_indexed_audit.csv`
+
+`steel_demand_and_scrap.csv` is already a country dataset and remains the
+upstream source. Regional consumption, population, and per-capita demand are
+available in the TIAM workbook's `Data` and `TIAM_Data` sheets.
+
 The `*_omnia_growth_rates.csv` files are transposed milestone-year indices:
 years are rows, OMNIA regions are columns, 2019 equals 1, and the 2050 index is
 held constant through 2100.

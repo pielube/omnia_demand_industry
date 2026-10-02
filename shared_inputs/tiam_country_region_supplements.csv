@@ -1,0 +1,31 @@
+Country,Code,Region,Reason
+Anguilla,AIA,CSA,Caribbean territory assigned to the supplied map's Central and South America group.
+Andorra,AND,WEU,Western European country assigned consistently with neighbouring France and Spain.
+American Samoa,ASM,ODA,Pacific territory assigned consistently with the supplied map's other developing Asia and Pacific countries.
+"Bonaire, Sint Eustatius and Saba",BES,CSA,Caribbean successor territory of the Netherlands Antilles which the supplied map assigns to CSA.
+Cook Islands,COK,ODA,Pacific country assigned consistently with the supplied map's other developing Asia and Pacific countries.
+Curaçao,CUW,CSA,Caribbean successor country of the Netherlands Antilles which the supplied map assigns to CSA.
+Cayman Islands,CYM,CSA,Caribbean territory assigned to the supplied map's Central and South America group.
+Falkland Islands (Malvinas),FLK,CSA,South Atlantic territory off South America assigned geographically to the Americas group.
+Faroe Islands,FRO,WEU,Danish territory assigned to Western Europe consistently with Denmark in the supplied map.
+Gibraltar,GIB,WEU,Territory in Western Europe assigned geographically to WEU.
+Greenland,GRL,WEU,Danish-territory convention assigns Greenland to Western Europe consistently with Denmark rather than its geographical North American location.
+Liechtenstein,LIE,WEU,Western European country assigned consistently with neighbouring Austria and Switzerland.
+Saint Martin,MAF,CSA,Caribbean territory assigned to the supplied map's Central and South America group.
+Monaco,MCO,WEU,Western European country assigned consistently with neighbouring France.
+Marshall Islands,MHL,ODA,Pacific country assigned consistently with the supplied map's other developing Asia and Pacific countries.
+Northern Mariana Islands,MNP,ODA,Pacific territory assigned consistently with Guam and the supplied map's other developing Asia and Pacific countries.
+Montserrat,MSR,CSA,Caribbean territory assigned to the supplied map's Central and South America group.
+Niue,NIU,ODA,Pacific country assigned consistently with the supplied map's other developing Asia and Pacific countries.
+Nauru,NRU,ODA,Pacific country assigned consistently with the supplied map's other developing Asia and Pacific countries.
+Palau,PLW,ODA,Pacific country assigned consistently with the supplied map's other developing Asia and Pacific countries.
+Saint Helena,SHN,AFR,South Atlantic territory off Africa assigned geographically to the Africa group.
+Svalbard and Jan Mayen Islands,SJM,WEU,Norwegian territory assigned to Western Europe consistently with Norway in the supplied map.
+San Marino,SMR,WEU,Western European country assigned consistently with surrounding Italy.
+Saint Pierre and Miquelon,SPM,CSA,Geographical Americas convention assigns this North American territory to the residual Americas group; CAN and USA remain country-specific regions.
+Sint Maarten (Dutch part),SXM,CSA,Caribbean successor country of the Netherlands Antilles which the supplied map assigns to CSA.
+Turks and Caicos Islands,TCA,CSA,Caribbean territory assigned to the supplied map's Central and South America group.
+Tuvalu,TUV,ODA,Pacific country assigned consistently with the supplied map's other developing Asia and Pacific countries.
+British Virgin Islands,VGB,CSA,Caribbean territory assigned to the supplied map's Central and South America group.
+Wallis and Futuna Islands,WLF,ODA,Pacific territory assigned consistently with the supplied map's other developing Asia and Pacific countries.
+Kosovo,XKX,EEU,Eastern European country assigned consistently with neighbouring Serbia and Montenegro; XKX is the country code used in repository sources.

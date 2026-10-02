@@ -25,6 +25,41 @@ workbooks, the OMNIA country-region mapping, and the OMNIA INF workbook.
 Generated outputs are generally stored as `.csv`; steel also retains its final
 OMNIA-facing workbook.
 
+## TIAM regional outputs
+
+Aluminium and cement also have TIAM-region CSVs beside every current
+`*omnia*.csv`, with `omnia` replaced by `tiam` in the filename. Their absolute
+projections contain `TIAMRegion` and annual 2019-2050 values in kt. Growth
+files use the same milestone years as OMNIA, with 2019 equal to 1 and the 2050
+index held constant through 2100. TIAM indices are recalculated from the TIAM
+totals rather than averaging OMNIA indices.
+
+The supplied map is saved as
+`shared_inputs/tiam_country_countrycode_region.csv`; documented coverage
+additions are in `shared_inputs/tiam_country_region_supplements.csv`. See
+`shared_inputs/README.md` for the five approved geographic corrections and
+the assumptions used for omitted territories.
+
+Regenerate all 26 TIAM CSVs from the existing country projections with:
+
+```text
+python create_tiam_country_outputs.py
+```
+
+Run this after refreshing aluminium or cement country projections. It checks
+mapping coverage and annual global totals before writing the TIAM files.
+Steel has a separate TIAM workbook and seven regional CSVs. Rebuild them with:
+
+```text
+python steel/create_tiam_steel_outputs.py --calibration-method worldsteel
+```
+
+This replays the steel workbook's production calculation with TIAM country
+aggregations, uses reported World Steel 2019 country production for calibration,
+and recalculates a formula-based TIAM workbook in a separate hidden Excel
+instance before extracting the CSVs. See `steel/README.md` for the calibration
+and growth-adjustment assumptions.
+
 ## OMNIA region definition
 
 The shared country-region mapping now assigns only South Korea (`KOR`) to
